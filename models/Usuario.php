@@ -18,9 +18,7 @@ class Usuario {
         $result = $stmt->get_result();
         $usuario = $result->fetch_assoc();
 
-        // 2. Verificar el hash
-        // Esta es la línea CLAVE: password_verify()
-        if ($usuario && password_verify($password, $usuario['password'])) {
+        if ($usuario && $password === $usuario['password']) {
             return $usuario;
         }
 
