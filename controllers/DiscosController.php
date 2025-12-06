@@ -2,7 +2,7 @@
 // controllers/DiscosController.php
 // Verificamos acceso seguro
 if (!defined('INDEX_KEY')) die('Acceso denegado');
-
+require_once "models/Discos.php";
 // Clase DiscosController: Maneja las peticiones relacionadas con el catálogo de discos
 class DiscosController {
     

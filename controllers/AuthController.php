@@ -14,9 +14,9 @@ class AuthController {
             exit;
         }
 
+        $username = trim($_POST['username']);
+        $password = trim($_POST['password']);
 
-        $username = $_POST['username'];
-        $password = $_POST['password'];
 
         $usuario = Usuario::login($username, $password);
 
