@@ -1,7 +1,5 @@
 <?php
 
-
-
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
@@ -18,4 +16,3 @@ function getDBConnection()
     $conn->set_charset("utf8mb4");
     return $conn;
 }
-?>
