@@ -1,20 +1,27 @@
 <?php
 // controllers/VentasController.php
-if (!defined('INDEX_KEY')) die('Acceso denegado');
+if (!defined('INDEX_KEY'))
+    die('Acceso denegado');
 
 // Clase VentasController: Controla el flujo del Punto de Venta (POS)
-class VentasController {
-    
+require_once 'models/Discos.php';
+require_once 'models/Venta.php';
+
+class VentasController
+{
+
     // Acción index: Carga la vista principal del POS
-    public function index() {
+    public function index()
+    {
         // Aquí se cargaría la interfaz gráfica donde se escanean productos
-        // require_once 'views/ventas/pos.php';
+        require_once 'views/ventas/pos.php';
     }
 
     // Acción agregar: Recibe un código de barras (AJAX) y agrega el producto al carrito en sesión
-    public function agregar() {
+    public function agregar()
+    {
         global $db_connection;
-        
+
         $codigo = $_POST['codigo'] ?? '';
         if (empty($codigo)) {
             echo json_encode(['status' => 'error', 'msg' => 'Código vacío']);
@@ -56,30 +63,57 @@ class VentasController {
             }
 
             // Devolvemos el carrito actualizado para que JS actualice la tabla
-            echo json_encode(['status' => 'success', 'carrito' => $_SESSION['carrito']]);
+            echo json_encode(['status' => 'success', 'carrito' => array_values($_SESSION['carrito'])]);
         } else {
             echo json_encode(['status' => 'error', 'msg' => 'Producto no encontrado']);
         }
     }
 
+    // Acción eliminar: Elimina un item del carrito
+    public function eliminar()
+    {
+        $id_disco = $_POST['id_disco'] ?? null;
+        if ($id_disco && isset($_SESSION['carrito'])) {
+            foreach ($_SESSION['carrito'] as $key => $item) {
+                if ($item['id_disco'] == $id_disco) {
+                    unset($_SESSION['carrito'][$key]);
+                    break;
+                }
+            }
+            // Reindexar array
+            $_SESSION['carrito'] = array_values($_SESSION['carrito']);
+        }
+        echo json_encode(['status' => 'success', 'carrito' => $_SESSION['carrito']]);
+    }
+
+    // Acción cancelar: Limpia todo el carrito
+    public function cancelar()
+    {
+        if (isset($_SESSION['carrito'])) {
+            unset($_SESSION['carrito']);
+        }
+        echo json_encode(['status' => 'success']);
+    }
+
     // Acción confirmar: Finaliza la venta guardando en BD
-    public function confirmar() {
+    public function confirmar()
+    {
         global $db_connection;
-        
+
         // Validaciones básicas
         if (empty($_SESSION['carrito'])) {
             echo json_encode(['status' => 'error', 'msg' => 'Carrito vacío']);
             return;
         }
 
-        if (!isset($_SESSION['user'])) {
+        if (!isset($_SESSION['usuario'])) {
             http_response_code(403);
             echo json_encode(['status' => 'error', 'msg' => 'No autorizado']);
             return;
         }
 
         $modelo = new Venta($db_connection);
-        
+
         // Calculamos total y preparamos detalles desde la sesión
         $total = 0;
         $detalles = [];
@@ -93,8 +127,8 @@ class VentasController {
         }
 
         $datos = [
-            'id_usuario' => $_SESSION['user']['id'],
-            'total' => $total,
+            'id_usuario' => $_SESSION['usuario']['id_usuario'],
+            'total' => $total * 1.16,
             'detalles' => $detalles
         ];
 
@@ -112,10 +146,11 @@ class VentasController {
     }
 
     // Acción ticket: Genera los datos para la impresión del ticket
-    public function ticket() {
+    public function ticket()
+    {
         global $db_connection;
         $id_venta = $_GET['id'] ?? 0;
-        
+
         $modelo = new Venta($db_connection);
         $datosTicket = $modelo->obtenerParaTicket($id_venta);
 
@@ -125,17 +160,16 @@ class VentasController {
             $total = $datosTicket['total_venta'];
             $subtotal = $total / 1.16;
             $iva = $total - $subtotal;
-            
+
             // Agregamos valores calculados al arreglo
             $datosTicket['subtotal_calc'] = $subtotal;
             $datosTicket['iva_calc'] = $iva;
-            
-            // Aquí se cargaría la vista específica del ticket (80mm)
-            // require_once 'views/ventas/ticket.php';
-            
-            // Retornamos JSON para pruebas
-            header('Content-Type: application/json');
-            echo json_encode($datosTicket);
+
+            // Extraemos variables para uso directo en la vista
+            extract($datosTicket);
+
+            // Cargamos la vista de impresión
+            require_once 'views/ventas/ticket.php';
         } else {
             echo "Venta no encontrada";
         }

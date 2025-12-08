@@ -2,15 +2,19 @@
 // models/Disco.php
 
 // Verificamos que la constante INDEX_KEY esté definida para evitar acceso directo al archivo
-if (!defined('INDEX_KEY')) { die('Acceso denegado'); }
+if (!defined('INDEX_KEY')) {
+    die('Acceso denegado');
+}
 
 // Clase Disco: Maneja la lógica de negocio relacionada con los discos (productos)
-class Disco {
+class Disco
+{
     // Propiedad para almacenar la conexión a la base de datos
     private $db;
 
     // Constructor: Recibe la conexión a la BD y la asigna a la propiedad local
-    public function __construct($conexion) {
+    public function __construct($conexion)
+    {
         $this->db = $conexion;
     }
 
@@ -22,7 +26,8 @@ class Disco {
     // $limit: cantidad de registros por página
     // $offset: desde qué registro empezar
     // $busqueda: término de búsqueda (opcional)
-    public function listar($limit = 10, $offset = 0, $busqueda = '') {
+    public function listar($limit = 10, $offset = 0, $busqueda = '')
+    {
         // Consulta SQL compleja con múltiples JOINs para obtener toda la información relacionada
         $sql = "SELECT d.id_disco, d.titulo, d.codigo_barras, d.precio_venta, d.costo_promedio, d.tipo,
                        a.nombre_artista, di.nombre_disquera,
@@ -42,7 +47,7 @@ class Disco {
         if ($busqueda) {
             $sql .= " AND (d.titulo LIKE ? OR d.codigo_barras LIKE ? OR a.nombre_artista LIKE ?)";
         }
-        
+
         // Agrupamos por ID de disco y ordenamos descendente
         $sql .= " GROUP BY d.id_disco ORDER BY d.id_disco DESC LIMIT ? OFFSET ?";
 
@@ -60,7 +65,7 @@ class Disco {
         // Ejecutamos la consulta
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         // Procesamos los resultados
         $lista = [];
         while ($row = $result->fetch_assoc()) {
@@ -77,8 +82,10 @@ class Disco {
     }
 
     // Método para obtener un solo disco por su código de barras (Detalle)
-    public function obtenerPorCodigo($codigo) {
-        if (empty($codigo)) return null;
+    public function obtenerPorCodigo($codigo)
+    {
+        if (empty($codigo))
+            return null;
 
         // Consulta específica para un solo registro
         $sql = "SELECT d.*, a.nombre_artista, di.nombre_disquera,
@@ -95,15 +102,49 @@ class Disco {
         $stmt->bind_param("s", $codigo);
         $stmt->execute();
         $disco = $stmt->get_result()->fetch_assoc();
-        
+
         // Si encontramos el disco, cargamos sus relaciones (géneros, canciones, imágenes extra)
         if ($disco) {
             $disco['generos'] = $this->obtenerGeneros($disco['id_disco']);
             $disco['canciones'] = $this->obtenerCanciones($disco['id_disco']);
             $disco['imagenes_extra'] = $this->obtenerImagenesExtra($disco['id_disco']);
-            
+
             // Convertimos imagen principal a Base64
-            if($disco['contenido_imagen']) {
+            if ($disco['contenido_imagen']) {
+                $disco['imagen_base64'] = base64_encode($disco['contenido_imagen']);
+                unset($disco['contenido_imagen']);
+            }
+        }
+        return $disco;
+    }
+
+    // Método para obtener un solo disco por su ID (Para edición)
+    public function obtenerPorId($id)
+    {
+        if (empty($id))
+            return null;
+
+        $sql = "SELECT d.*, a.nombre_artista, di.nombre_disquera,
+                       e.cantidad_actual as stock,
+                       im.contenido_imagen
+                FROM discos d
+                JOIN artistas a ON d.id_artista = a.id_artista 
+                LEFT JOIN disqueras di ON d.id_disquera = di.id_disquera
+                LEFT JOIN existencias e ON d.id_disco = e.id_disco
+                LEFT JOIN imagenes_discos im ON d.id_disco = im.id_disco AND im.es_principal = 1
+                WHERE d.id_disco = ? LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $disco = $stmt->get_result()->fetch_assoc();
+
+        if ($disco) {
+            $disco['generos'] = $this->obtenerGeneros($disco['id_disco']);
+            $disco['canciones'] = $this->obtenerCanciones($disco['id_disco']);
+            $disco['imagenes_extra'] = $this->obtenerImagenesExtra($disco['id_disco']);
+
+            if ($disco['contenido_imagen']) {
                 $disco['imagen_base64'] = base64_encode($disco['contenido_imagen']);
                 unset($disco['contenido_imagen']);
             }
@@ -112,17 +153,21 @@ class Disco {
     }
 
     // Método auxiliar para obtener listas de catálogos (Artistas, Géneros, Disqueras)
-    public function obtenerCatalogo($tabla) {
+    public function obtenerCatalogo($tabla)
+    {
         // Lista blanca para evitar inyección SQL en el nombre de la tabla
         $tablas_validas = ['artistas', 'disqueras', 'generos'];
-        if (!in_array($tabla, $tablas_validas)) return [];
+        if (!in_array($tabla, $tablas_validas))
+            return [];
 
         // Construimos nombres de columnas dinámicamente
         $col_id = "id_" . rtrim($tabla, 's'); // artistas -> id_artista
-        if ($tabla == 'generos') $col_id = 'id_genero'; 
-        
-        $col_nom = "nombre_" . rtrim($tabla, 's'); 
-        if ($tabla == 'generos') $col_nom = 'nombre_genero';
+        if ($tabla == 'generos')
+            $col_id = 'id_genero';
+
+        $col_nom = "nombre_" . rtrim($tabla, 's');
+        if ($tabla == 'generos')
+            $col_nom = 'nombre_genero';
 
         $sql = "SELECT $col_id as id, $col_nom as nombre FROM $tabla ORDER BY $col_nom ASC";
         return $this->db->query($sql)->fetch_all(MYSQLI_ASSOC);
@@ -133,7 +178,8 @@ class Disco {
     // =======================================================
 
     // Método para crear un nuevo disco
-    public function crear($datos, $files) {
+    public function crear($datos, $files)
+    {
         // Iniciamos transacción para asegurar que todo se guarde o nada
         $this->db->begin_transaction();
         try {
@@ -173,12 +219,13 @@ class Disco {
     }
 
     // Método para actualizar un disco existente
-    public function actualizar($id_disco, $datos, $files) {
+    public function actualizar($id_disco, $datos, $files)
+    {
         $this->db->begin_transaction();
         try {
             // 1. Actualizar datos de la tabla Base
             $stmt = $this->db->prepare("UPDATE discos SET titulo=?, id_artista=?, id_disquera=?, tipo=?, anio_lanzamiento=?, control_parental=?, precio_venta=?, costo_promedio=? WHERE id_disco=?");
-            $stmt->bind_param("siissiiddi", $datos['titulo'], $datos['artista'], $datos['disquera'], $datos['tipo'], $datos['anio'], $datos['parental'], $datos['precio'], $datos['costo'], $id_disco);
+            $stmt->bind_param("siisiiddi", $datos['titulo'], $datos['artista'], $datos['disquera'], $datos['tipo'], $datos['anio'], $datos['parental'], $datos['precio'], $datos['costo'], $id_disco);
             $stmt->execute();
             $stmt->close();
 
@@ -192,7 +239,7 @@ class Disco {
             // 3. Actualizar Imagen Principal (Si subieron una nueva)
             if (isset($files['imagen_principal']) && $files['imagen_principal']['error'] === UPLOAD_ERR_OK) {
                 $contenido = file_get_contents($files['imagen_principal']['tmp_name']);
-                
+
                 // Borrar anterior si existe y crear nueva
                 $this->db->query("DELETE FROM imagenes_discos WHERE id_disco = $id_disco AND es_principal = 1");
                 $this->guardarImagen($id_disco, $contenido, 1);
@@ -200,7 +247,7 @@ class Disco {
 
             // 4. Gestionar Imágenes extras (Eliminar seleccionadas y agregar nuevas)
             if (!empty($datos['eliminar_imagenes'])) {
-                foreach($datos['eliminar_imagenes'] as $id_img) {
+                foreach ($datos['eliminar_imagenes'] as $id_img) {
                     $this->eliminarImagen($id_img, $id_disco);
                 }
             }
@@ -218,7 +265,8 @@ class Disco {
     }
 
     // Método para borrado lógico (cambiar estado activo/inactivo)
-    public function cambiarEstado($id_disco, $activo) {
+    public function cambiarEstado($id_disco, $activo)
+    {
         $stmt = $this->db->prepare("UPDATE discos SET activo = ? WHERE id_disco = ?");
         $stmt->bind_param("ii", $activo, $id_disco);
         return $stmt->execute();
@@ -229,8 +277,10 @@ class Disco {
     // =======================================================
 
     // Helper para guardar relaciones de géneros
-    private function guardarGeneros($id_disco, $generos) {
-        if (empty($generos)) return;
+    private function guardarGeneros($id_disco, $generos)
+    {
+        if (empty($generos))
+            return;
         $stmt = $this->db->prepare("INSERT INTO discos_generos (id_disco, id_genero) VALUES (?, ?)");
         foreach ($generos as $g_id) {
             $stmt->bind_param("ii", $id_disco, $g_id);
@@ -240,12 +290,15 @@ class Disco {
     }
 
     // Helper para guardar lista de canciones
-    private function guardarCanciones($id_disco, $canciones) {
-        if (empty($canciones)) return;
+    private function guardarCanciones($id_disco, $canciones)
+    {
+        if (empty($canciones))
+            return;
         $stmt = $this->db->prepare("INSERT INTO canciones (id_disco, numero_pista, titulo_cancion, duracion) VALUES (?, ?, ?, ?)");
         $pista = 1;
         foreach ($canciones as $c) {
-            if (empty($c['titulo'])) continue;
+            if (empty($c['titulo']))
+                continue;
             // Formatear duración si viene incompleta
             $duracion = (strlen($c['duracion']) > 5) ? $c['duracion'] : "00:" . $c['duracion'];
             $stmt->bind_param("iiss", $id_disco, $pista, $c['titulo'], $duracion);
@@ -256,7 +309,8 @@ class Disco {
     }
 
     // Helper para guardar una imagen BLOB
-    private function guardarImagen($id_disco, $binario, $es_principal) {
+    private function guardarImagen($id_disco, $binario, $es_principal)
+    {
         $stmt = $this->db->prepare("INSERT INTO imagenes_discos (id_disco, contenido_imagen, es_principal) VALUES (?, ?, ?)");
         $null = null; // Necesario para send_long_data
         $stmt->bind_param("ibi", $id_disco, $null, $es_principal);
@@ -266,9 +320,11 @@ class Disco {
     }
 
     // Helper para procesar array de imágenes múltiples
-    private function procesarImagenesExtras($id_disco, $fileArray) {
-        if (!isset($fileArray['tmp_name']) || !is_array($fileArray['tmp_name'])) return;
-        
+    private function procesarImagenesExtras($id_disco, $fileArray)
+    {
+        if (!isset($fileArray['tmp_name']) || !is_array($fileArray['tmp_name']))
+            return;
+
         foreach ($fileArray['tmp_name'] as $key => $tmp) {
             if ($fileArray['error'][$key] === UPLOAD_ERR_OK && !empty($tmp)) {
                 $contenido = file_get_contents($tmp);
@@ -278,14 +334,16 @@ class Disco {
     }
 
     // Helper para eliminar una imagen específica
-    private function eliminarImagen($id_imagen, $id_disco) {
+    private function eliminarImagen($id_imagen, $id_disco)
+    {
         $stmt = $this->db->prepare("DELETE FROM imagenes_discos WHERE id_imagen = ? AND id_disco = ?");
         $stmt->bind_param("ii", $id_imagen, $id_disco);
         $stmt->execute();
     }
 
     // Helper para obtener géneros de un disco
-    private function obtenerGeneros($id) {
+    private function obtenerGeneros($id)
+    {
         $stmt = $this->db->prepare("SELECT g.id_genero, g.nombre_genero FROM generos g JOIN discos_generos dg ON g.id_genero = dg.id_genero WHERE dg.id_disco = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -293,21 +351,23 @@ class Disco {
     }
 
     // Helper para obtener canciones de un disco
-    private function obtenerCanciones($id) {
+    private function obtenerCanciones($id)
+    {
         $stmt = $this->db->prepare("SELECT numero_pista, titulo_cancion, duracion FROM canciones WHERE id_disco = ? ORDER BY numero_pista ASC");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
-    
+
     // Helper para obtener imágenes extra de un disco
-    private function obtenerImagenesExtra($id) {
+    private function obtenerImagenesExtra($id)
+    {
         $stmt = $this->db->prepare("SELECT id_imagen, contenido_imagen FROM imagenes_discos WHERE id_disco = ? AND es_principal = 0");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $imgs = [];
-        while($row = $result->fetch_assoc()){
+        while ($row = $result->fetch_assoc()) {
             $row['base64'] = base64_encode($row['contenido_imagen']);
             unset($row['contenido_imagen']);
             $imgs[] = $row;

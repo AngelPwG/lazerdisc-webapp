@@ -2,23 +2,28 @@
 // models/Compra.php
 
 // Verificamos que la constante INDEX_KEY esté definida para evitar acceso directo al archivo
-if (!defined('INDEX_KEY')) { die('Acceso denegado'); }
+if (!defined('INDEX_KEY')) {
+    die('Acceso denegado');
+}
 
 // Clase Compra: Maneja la lógica de negocio relacionada con las compras a proveedores
-class Compra {
+class Compra
+{
     // Propiedad para almacenar la conexión a la base de datos
     private $db;
 
     // Constructor: Recibe la conexión a la BD y la asigna a la propiedad local
-    public function __construct($conexion) {
+    public function __construct($conexion)
+    {
         $this->db = $conexion;
     }
 
     // Método para registrar una nueva compra en la base de datos
     // Este método utiliza una transacción para asegurar la integridad de los datos
-    public function crear($datos) {
+    public function crear($datos)
+    {
         // $datos es un arreglo que contiene: 'id_proveedor', 'id_usuario', 'total', y 'detalles' (lista de productos)
-        
+
         // Iniciamos la transacción. Si algo falla, se pueden revertir todos los cambios.
         $this->db->begin_transaction();
         try {
@@ -37,7 +42,7 @@ class Compra {
             // 2. Insertar Detalles y Actualizar Stock
             // Preparamos la consulta para insertar cada producto en 'compras_det'
             $stmtDet = $this->db->prepare("INSERT INTO compras_det (id_compra, id_disco, cantidad, costo_unitario, subtotal) VALUES (?, ?, ?, ?, ?)");
-            
+
             // Preparamos la consulta para actualizar el inventario en 'existencias'
             // Usamos ON DUPLICATE KEY UPDATE: Si ya existe el registro del disco, actualizamos la cantidad. Si no, lo insertamos.
             $stmtStock = $this->db->prepare("INSERT INTO existencias (id_disco, cantidad_actual, ultima_actualizacion) 
@@ -48,7 +53,7 @@ class Compra {
             foreach ($datos['detalles'] as $det) {
                 // Calculamos el subtotal de la línea (cantidad * costo unitario)
                 $subtotal = $det['cantidad'] * $det['costo'];
-                
+
                 // Vinculamos parámetros para insertar el detalle: id_compra, id_disco, cantidad, costo, subtotal
                 $stmtDet->bind_param("iiidd", $id_compra, $det['id_disco'], $det['cantidad'], $det['costo'], $subtotal);
                 // Ejecutamos la inserción del detalle
@@ -59,7 +64,7 @@ class Compra {
                 // Ejecutamos la actualización del stock (suma la cantidad comprada)
                 $stmtStock->execute();
             }
-            
+
             // Cerramos los statements auxiliares
             $stmtDet->close();
             $stmtStock->close();
@@ -79,7 +84,8 @@ class Compra {
 
     // Método para listar compras, útil para reportes o historial
     // Permite filtrar por rango de fechas
-    public function listar($fechaInicio = null, $fechaFin = null) {
+    public function listar($fechaInicio = null, $fechaFin = null)
+    {
         // Consulta base seleccionando datos relevantes y haciendo JOIN con proveedores y usuarios para obtener nombres
         $sql = "SELECT c.id_compra, c.fecha_compra, c.total_compra, 
                        p.nombre as proveedor, u.username as usuario
@@ -87,7 +93,7 @@ class Compra {
                 JOIN proveedores p ON c.id_proveedor = p.id_proveedor
                 JOIN usuarios u ON c.id_usuario = u.id_usuario
                 WHERE 1=1"; // 1=1 facilita concatenar condiciones AND dinámicamente
-        
+
         $params = [];
         $types = "";
 
@@ -109,14 +115,15 @@ class Compra {
         if (!empty($params)) {
             $stmt->bind_param($types, ...$params);
         }
-        
+
         // Ejecutamos y retornamos todos los resultados como un arreglo asociativo
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
-    
+
     // Método para obtener los detalles (productos) de una compra específica
-    public function obtenerDetalles($id_compra) {
+    public function obtenerDetalles($id_compra)
+    {
         // Consulta haciendo JOIN con discos para obtener nombre y código de barras
         $sql = "SELECT cd.*, d.titulo, d.codigo_barras 
                 FROM compras_det cd
@@ -126,5 +133,12 @@ class Compra {
         $stmt->bind_param("i", $id_compra);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // Método auxiliar para obtener la lista de proveedores
+    public function obtenerProveedores()
+    {
+        $sql = "SELECT id_proveedor, nombre FROM proveedores ORDER BY nombre ASC";
+        return $this->db->query($sql)->fetch_all(MYSQLI_ASSOC);
     }
 }

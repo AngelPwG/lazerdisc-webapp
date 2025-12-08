@@ -1,64 +1,86 @@
 <?php
 // controllers/ComprasController.php
 // Verificamos acceso seguro
-if (!defined('INDEX_KEY')) die('Acceso denegado');
+if (!defined('INDEX_KEY'))
+    die('Acceso denegado');
+
+require_once 'models/Compra.php';
+require_once 'models/Discos.php';
 
 // Clase ComprasController: Maneja las peticiones HTTP relacionadas con compras
-class ComprasController {
-    
+class ComprasController
+{
     // Acción index: Muestra el listado de compras
-    public function index() {
-        global $db_connection; // Usamos la conexión global
-        $modelo = new Compra($db_connection); // Instanciamos el modelo
-        
-        // Obtenemos filtros de fecha de la URL (GET), o usamos valores por defecto (mes actual / hoy)
-        $fechaInicio = $_GET['f_ini'] ?? date('Y-m-01');
+    public function index()
+    {
+        global $db_connection;
+        $modelo = new Compra($db_connection);
+
+        $fechaInicio = $_GET['f_ini'] ?? date('Y-11-01');
         $fechaFin = $_GET['f_fin'] ?? date('Y-m-d');
-        
-        // Llamamos al modelo para obtener los datos
+
         $compras = $modelo->listar($fechaInicio, $fechaFin);
-        
-        // Aquí normalmente se incluiría la vista HTML
-        // require_once 'views/compras/index.php';
-        
-        // Para propósitos de demostración/debug, imprimimos JSON si no hay vista
-        // echo json_encode($compras);
+
+        require_once 'views/compras/index.php';
+    }
+
+    // Acción crear: Muestra el formulario de registro de nueva compra
+    public function crear()
+    {
+        global $db_connection;
+        $modelo = new Compra($db_connection);
+        $proveedores = $modelo->obtenerProveedores();
+        require_once 'views/compras/crear.php';
     }
 
     // Acción guardar: Procesa el formulario o petición JSON para crear una compra
-    public function guardar() {
+    public function guardar()
+    {
         global $db_connection;
-        
-        // Solo procesamos si el método es POST
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Intentamos leer el cuerpo de la petición como JSON (común en aplicaciones modernas/SPA)
             $input = json_decode(file_get_contents('php://input'), true);
-            // Si no es JSON, asumimos que son datos de formulario estándar ($_POST)
-            if (!$input) $input = $_POST; 
+            if (!$input)
+                $input = $_POST;
 
             $modelo = new Compra($db_connection);
-            
-            // Verificamos que el usuario haya iniciado sesión
-            if (!isset($_SESSION['user'])) {
-                http_response_code(403); // Código HTTP Prohibido
+            $modeloDisco = new Disco($db_connection); // Necesitamos el modelo de discos para buscar por código
+
+            if (!isset($_SESSION['usuario'])) {
+                http_response_code(403);
                 die("No autorizado");
             }
 
-            // Preparamos el arreglo de datos para el modelo
+            // Procesar detalles para obtener IDs a partir de códigos de barras
+            $detallesProcesados = [];
+            foreach ($input['detalles'] as $detalle) {
+                $codigo = $detalle['codigo_barras'];
+                $disco = $modeloDisco->obtenerPorCodigo($codigo);
+
+                if (!$disco) {
+                    http_response_code(400); // Bad Request
+                    echo json_encode(['status' => 'error', 'message' => "El código de barras '$codigo' no existe."]);
+                    return;
+                }
+
+                $detallesProcesados[] = [
+                    'id_disco' => $disco['id_disco'],
+                    'cantidad' => $detalle['cantidad'],
+                    'costo' => $detalle['costo']
+                ];
+            }
+
             $datos = [
                 'id_proveedor' => $input['id_proveedor'],
-                'id_usuario' => $_SESSION['user']['id'], // El usuario que registra es el de la sesión actual
+                'id_usuario' => $_SESSION['usuario']['id_usuario'],
                 'total' => $input['total'],
-                'detalles' => $input['detalles'] // Lista de productos: {id_disco, cantidad, costo}
+                'detalles' => $detallesProcesados
             ];
 
             try {
-                // Intentamos crear la compra
                 $id = $modelo->crear($datos);
-                // Si éxito, respondemos con JSON indicando el ID creado
                 echo json_encode(['status' => 'success', 'id_compra' => $id]);
             } catch (Exception $e) {
-                // Si error, enviamos código 500 y el mensaje de error
                 http_response_code(500);
                 echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             }

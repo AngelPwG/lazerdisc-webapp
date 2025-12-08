@@ -19,12 +19,16 @@
 body {
     font-family: 'Poppins', Arial, sans-serif;
     background-color: var(--color-primary-light); /* Fondo con tu color claro */
-    display: flex; /* Para centrar la tarjeta verticalmente */
-    justify-content: center; /* Centrar horizontalmente */
-    align-items: center; /* Centrar verticalmente */
     min-height: 100vh; /* Asegura que ocupe toda la altura de la vista */
     margin: 0;
     padding: 20px; /* Padding para que no se pegue a los bordes en pantallas pequeñas */
+}
+
+.login-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .login-container {

@@ -2,20 +2,25 @@
 // models/Venta.php
 
 // Seguridad: Evitar acceso directo
-if (!defined('INDEX_KEY')) { die('Acceso denegado'); }
+if (!defined('INDEX_KEY')) {
+    die('Acceso denegado');
+}
 
 // Clase Venta: Maneja la lógica de ventas, validación de stock y tickets
-class Venta {
+class Venta
+{
     private $db;
 
-    public function __construct($conexion) {
+    public function __construct($conexion)
+    {
         $this->db = $conexion;
     }
 
     // Método para registrar una venta. Es crítico usar transacciones aquí.
-    public function crear($datos) {
+    public function crear($datos)
+    {
         // $datos contiene: 'id_usuario', 'total', y 'detalles' (lista de items a vender)
-        
+
         $this->db->begin_transaction(); // Inicia transacción
         try {
             // 1. Validar Stock ANTES de insertar nada
@@ -30,7 +35,8 @@ class Venta {
 
                 // Si no hay registro de existencia o la cantidad es menor a la solicitada, lanzamos error
                 if (!$res || $res['cantidad_actual'] < $det['cantidad']) {
-                    throw new Exception("Stock insuficiente para el producto ID: " . $det['id_disco']);
+                    throw new Exception("Stock insuficiente para el producto 
+                    " . $det['titulo'] . " con ID: " . $det['id_disco']);
                 }
             }
 
@@ -51,7 +57,7 @@ class Venta {
 
             foreach ($datos['detalles'] as $det) {
                 $subtotal = $det['cantidad'] * $det['precio'];
-                
+
                 // Insertamos el detalle de la venta
                 $stmtDet->bind_param("iiidd", $id_venta, $det['id_disco'], $det['cantidad'], $det['precio'], $subtotal);
                 $stmtDet->execute();
@@ -60,7 +66,7 @@ class Venta {
                 $stmtUpdate->bind_param("ii", $det['cantidad'], $det['id_disco']);
                 $stmtUpdate->execute();
             }
-            
+
             // Cerramos statements
             $stmtDet->close();
             $stmtUpdate->close();
@@ -78,7 +84,8 @@ class Venta {
     }
 
     // Método para obtener todos los datos necesarios para imprimir el ticket
-    public function obtenerParaTicket($id_venta) {
+    public function obtenerParaTicket($id_venta)
+    {
         // Obtenemos encabezado de venta y nombre del cajero
         $sql = "SELECT v.id_venta, v.folio_venta, v.fecha_venta, v.total_venta, 
                        u.username as cajero
@@ -90,7 +97,8 @@ class Venta {
         $stmt->execute();
         $venta = $stmt->get_result()->fetch_assoc();
 
-        if (!$venta) return null; // Si no existe la venta, retornamos null
+        if (!$venta)
+            return null; // Si no existe la venta, retornamos null
 
         // Obtenemos los detalles (productos) de esa venta
         $sqlDet = "SELECT vd.cantidad, vd.precio_unitario, vd.subtotal, 
