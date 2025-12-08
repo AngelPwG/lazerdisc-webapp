@@ -35,8 +35,7 @@ class Venta
 
                 // Si no hay registro de existencia o la cantidad es menor a la solicitada, lanzamos error
                 if (!$res || $res['cantidad_actual'] < $det['cantidad']) {
-                    throw new Exception("Stock insuficiente para el producto 
-                    " . $det['titulo'] . " con ID: " . $det['id_disco']);
+                    throw new Exception("Stock insuficiente para el producto con ID: " . $det['id_disco']);
                 }
             }
 
