@@ -41,7 +41,7 @@ class Venta
 
             // 2. Insertar Encabezado de Venta
             // Generamos un folio único basado en fecha y aleatorio
-            $folio = "V-" . date('Ymd-His') . "-" . rand(100, 999);
+            $folio = "V-" . date('Ymd-His') . "-" . rand(10, 99);
             $stmt = $this->db->prepare("INSERT INTO ventas (folio_venta, id_usuario_cajero, total_venta, fecha_venta, estado) VALUES (?, ?, ?, NOW(), 'completada')");
             $stmt->bind_param("sid", $folio, $datos['id_usuario'], $datos['total']);
             $stmt->execute();

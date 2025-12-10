@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('America/Mazatlan');
 
 // -- IMPORTANTE: Definimos esta constante para que DiscosController no falle
 define('INDEX_KEY', true);
@@ -33,6 +34,7 @@ if (isset($_SESSION['usuario'])) {
             'Auth' => '*',
             'Ventas' => '*',
             'Devoluciones' => '*',
+            'Reportes' => ['generar'],
             'Discos' => ['index'] // Solo lectura en catálogo
         ]
     ];

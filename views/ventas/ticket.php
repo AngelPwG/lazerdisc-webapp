@@ -149,7 +149,7 @@
         </p>
         <p class="bold" style="font-size: 14px; margin-top: 5px;">
             <span>TOTAL:</span>
-            <span>$<?= number_format($total, 2) ?></span>
+            <span>$<?= number_format($total_calc, 2) ?></span>
         </p>
     </div>
 

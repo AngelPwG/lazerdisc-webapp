@@ -24,6 +24,9 @@ $rol = $_SESSION['usuario']['rol'] ?? 'guest';
     <?php if ($rol === 'admin'): ?>
         <a href="index.php?c=Reportes&a=index">Reportes</a> |
     <?php endif; ?>
+    
+    <!-- Cierre de Caja (visible para todos) -->
+    <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=html&f_ini=<?= date('Y-m-d') ?>" target="_blank">Cierre de Caja</a> |
 
     <a href="index.php?c=Auth&a=logout" style="float: right;">Salir</a>
 </nav>

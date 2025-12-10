@@ -17,15 +17,50 @@ class Devolucion {
         
         $this->db->begin_transaction();
         try {
-            // 1. Insertar Encabezado de Devolución
-            // Registramos quién autorizó y de qué venta proviene
-            $stmt = $this->db->prepare("INSERT INTO devoluciones_venta (id_venta_origen, id_usuario_autoriza, fecha_devolucion, motivo, total_reembolsado) VALUES (?, ?, NOW(), ?, ?)");
-            $stmt->bind_param("iisd", $datos['id_venta'], $datos['id_usuario'], $datos['motivo'], $datos['total_reembolsado']);
+            // 1. Validar cantidades (Nunca mayores a lo vendido - devoluciones previas)
+            foreach ($datos['detalles'] as $det) {
+                $id_disco = $det['id_disco'];
+                $cant_devolver = $det['cantidad'];
+
+                // a) Obtener cantidad vendida originalmente
+                $stmtV = $this->db->prepare("SELECT cantidad FROM ventas_det WHERE id_venta = ? AND id_disco = ?");
+                $stmtV->bind_param("ii", $datos['id_venta'], $id_disco);
+                $stmtV->execute();
+                $resV = $stmtV->get_result()->fetch_assoc();
+                $stmtV->close();
+
+                if (!$resV) {
+                    throw new Exception("El producto ID $id_disco no pertenece a esta venta.");
+                }
+                $cant_vendida = $resV['cantidad'];
+
+                // b) Obtener cantidad ya devuelta anteriormente
+                // (Sumamos devoluciones previas asociadas a esta venta y este producto)
+                $sqlDevs = "SELECT IFNULL(SUM(dd.cantidad_devuelta), 0) as total_devuelto 
+                            FROM devoluciones_det dd
+                            JOIN devoluciones_venta dv ON dd.id_devolucion = dv.id_devolucion
+                            WHERE dv.id_venta_origen = ? AND dd.id_disco = ?";
+                $stmtD = $this->db->prepare($sqlDevs);
+                $stmtD->bind_param("ii", $datos['id_venta'], $id_disco);
+                $stmtD->execute();
+                $resD = $stmtD->get_result()->fetch_assoc();
+                $stmtD->close();
+                
+                $cant_previa = $resD['total_devuelto'];
+
+                if (($cant_previa + $cant_devolver) > $cant_vendida) {
+                    throw new Exception("La cantidad a devolver del producto ID $id_disco excede lo vendido (" . ($cant_vendida - $cant_previa) . " disponibles para devolución).");
+                }
+            }
+
+            // 2. Insertar Encabezado de Devolución
+            $stmt = $this->db->prepare("INSERT INTO devoluciones_venta (id_venta_origen, id_usuario_autoriza, fecha_devolucion, total_reembolsado, motivo) VALUES (?, ?, NOW(), ?, ?)");
+            $stmt->bind_param("iids", $datos['id_venta'], $datos['id_usuario'], $datos['total'], $datos['motivo']);
             $stmt->execute();
-            $id_devolucion = $stmt->insert_id;
+            $id_devolucion = $this->db->insert_id;
             $stmt->close();
 
-            // 2. Insertar Detalles y Restaurar Stock
+            // 3. Insertar Detalles y Restaurar Stock
             // Preparamos query para registrar qué items se devolvieron
             $stmtDet = $this->db->prepare("INSERT INTO devoluciones_det (id_devolucion, id_disco, cantidad_devuelta) VALUES (?, ?, ?)");
             // Preparamos query para SUMAR al stock (devolución = entrada de almacén)
@@ -51,6 +86,41 @@ class Devolucion {
             $this->db->rollback();
             throw $e;
         }
+    }
+
+    /**
+     * Obtener detalles de una venta por folio
+     * @param string $folio - Folio de la venta
+     * @return array|null - Array con datos de venta y detalles, o null si no existe
+     */
+    public function obtenerDetallesPorFolio($folio) {
+        // Buscar venta por folio
+        $stmt = $this->db->prepare("SELECT id_venta, folio_venta, total_venta, fecha_venta FROM ventas WHERE folio_venta = ?");
+        $stmt->bind_param("s", $folio);
+        $stmt->execute();
+        $venta = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        
+        if (!$venta) {
+            return null;
+        }
+        
+        // Obtener detalles de la venta
+        $stmt = $this->db->prepare("
+            SELECT vd.id_disco, d.titulo, d.codigo_barras, vd.cantidad, vd.precio_unitario, vd.subtotal
+            FROM ventas_det vd
+            JOIN discos d ON vd.id_disco = d.id_disco
+            WHERE vd.id_venta = ?
+        ");
+        $stmt->bind_param("i", $venta['id_venta']);
+        $stmt->execute();
+        $detalles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return [
+            'venta' => $venta,
+            'detalles' => $detalles
+        ];
     }
 
     // Método para listar devoluciones (Reportes)

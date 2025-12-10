@@ -12,6 +12,12 @@ class DevolucionesController
     // Acción index: Lista las devoluciones realizadas
     public function index()
     {
+        // Si es operador, redirigir directamente a crear devolución
+        if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] === 'operador') {
+            header("Location: index.php?c=Devoluciones&a=crear");
+            exit;
+        }
+
         global $db_connection;
         $modelo = new Devolucion($db_connection);
 
@@ -27,6 +33,37 @@ class DevolucionesController
     public function crear()
     {
         require_once 'views/devoluciones/crear.php';
+    }
+
+    // Acción para obtener detalles de una venta por folio (API endpoint para AJAX)
+    public function obtenerDetalleVenta()
+    {
+        global $db_connection;
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $folio = $_GET['folio'] ?? '';
+            
+            if (empty($folio)) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Folio requerido']);
+                return;
+            }
+            
+            $modelo = new Devolucion($db_connection);
+            $resultado = $modelo->obtenerDetallesPorFolio($folio);
+            
+            if (!$resultado) {
+                http_response_code(404);
+                echo json_encode(['status' => 'error', 'message' => 'Folio no encontrado']);
+                return;
+            }
+            
+            echo json_encode([
+                'status' => 'success',
+                'venta' => $resultado['venta'],
+                'detalles' => $resultado['detalles']
+            ]);
+        }
     }
 
     // Acción guardar: Procesa una nueva devolución
@@ -63,34 +100,37 @@ class DevolucionesController
             }
             $id_venta = $resVenta['id_venta'];
 
-            // 2. Procesar Detalles (Buscar ID Disco por Código de Barras)
+            // 2. Procesar Detalles - ahora esperamos id_disco directamente
             $detallesProcesados = [];
             foreach ($input['detalles'] as $item) {
-                $codigo = $item['codigo_barras'] ?? '';
+                $id_disco = $item['id_disco'] ?? 0;
+                $cantidad = $item['cantidad'] ?? 0;
 
-                $stmtD = $db_connection->prepare("SELECT id_disco, titulo FROM discos WHERE codigo_barras = ?");
-                $stmtD->bind_param("s", $codigo);
-                $stmtD->execute();
-                $resDisco = $stmtD->get_result()->fetch_assoc();
-                $stmtD->close();
-
-                if (!$resDisco) {
-                    echo json_encode(['status' => 'error', 'message' => "Producto con código '$codigo' no encontrado"]);
-                    return;
+                if ($id_disco && $cantidad > 0) {
+                    $detallesProcesados[] = [
+                        'id_disco' => $id_disco,
+                        'cantidad' => $cantidad
+                    ];
                 }
+            }
 
-                $detallesProcesados[] = [
-                    'id_disco' => $resDisco['id_disco'],
-                    'cantidad' => $item['cantidad'],
-                    'titulo' => $resDisco['titulo'] // Opcional, para debug error msg si falla stock
-                ];
+            if (empty($detallesProcesados)) {
+                echo json_encode(['status' => 'error', 'message' => 'Debe seleccionar al menos un producto para devolver']);
+                return;
+            }
+
+            // Validar motivo
+            $motivo = trim($input['motivo'] ?? '');
+            if (empty($motivo)) {
+                echo json_encode(['status' => 'error', 'message' => 'El motivo de la devolución es obligatorio']);
+                return;
             }
 
             $datos = [
                 'id_venta' => $id_venta,
                 'id_usuario' => $id_usuario,
-                'motivo' => $input['motivo'],
-                'total_reembolsado' => $input['total'],
+                'motivo' => $motivo,
+                'total' => $input['total'] ?? 0,
                 'detalles' => $detallesProcesados
             ];
 

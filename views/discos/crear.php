@@ -62,7 +62,8 @@
 
                 <div class="form-group">
                     <label>Año Lanzamiento:</label>
-                    <input type="number" name="anio" min="1900" max="2099" required>
+                    <input type="number" name="anio" min="1900" max="2099" required 
+                        oninput="validarAnio(this)">
                 </div>
 
                 <div class="form-group">
@@ -70,7 +71,6 @@
                     <select name="tipo">
                         <option value="CD">CD</option>
                         <option value="Vinilo">Vinilo</option>
-                        <option value="Digital">Digital</option>
                     </select>
                 </div>
 
@@ -87,11 +87,13 @@
                 <legend>Precios y Costos</legend>
                 <div class="form-group">
                     <label>Precio Venta:</label>
-                    <input type="number" step="0.01" name="precio" required>
+                    <input type="number" step="0.01" name="precio" required 
+                        oninput="validarPrecio(this)">
                 </div>
                 <div class="form-group">
                     <label>Costo Promedio:</label>
-                    <input type="number" step="0.01" name="costo" required>
+                    <input type="number" step="0.01" name="costo" required 
+                        oninput="validarCosto(this)">
                 </div>
             </fieldset>
 
@@ -125,21 +127,8 @@
         </form>
     </div>
 
-    <script>
-        let songCount = 1;
-        function agregarCancion() {
-            const container = document.getElementById('canciones-container');
-            const div = document.createElement('div');
-            div.className = 'song-row';
-            div.innerHTML = `
-                <input type="text" name="canciones[${songCount}][titulo]" placeholder="Título Canción" required>
-                <input type="text" name="canciones[${songCount}][duracion]" placeholder="Duración (MM:SS)" required>
-                <button type="button" onclick="this.parentElement.remove()">X</button>
-            `;
-            container.appendChild(div);
-            songCount++;
-        }
-    </script>
+    <script src="assets/js/validaciones.js"></script>
+    <script src="assets/js/discos.js"></script>
 </body>
 
 </html>

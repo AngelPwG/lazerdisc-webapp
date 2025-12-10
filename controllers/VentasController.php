@@ -63,9 +63,41 @@ class VentasController
             }
 
             // Devolvemos el carrito actualizado para que JS actualice la tabla
-            echo json_encode(['status' => 'success', 'carrito' => array_values($_SESSION['carrito'])]);
+            $mensaje = $encontrado ? 'Producto ya en carrito, cantidad incrementada' : 'Producto agregado';
+            echo json_encode([
+                'status' => 'success', 
+                'carrito' => array_values($_SESSION['carrito']),
+                'msg' => $mensaje,
+                'duplicado' => $encontrado
+            ]);
         } else {
             echo json_encode(['status' => 'error', 'msg' => 'Producto no encontrado']);
+        }
+    }
+
+    // Acción actualizar: Actualiza la cantidad de un producto en el carrito
+    public function actualizar()
+    {
+        $id_disco = $_POST['id_disco'] ?? null;
+        $cantidad = $_POST['cantidad'] ?? 0;
+        $cantidad = (int)$cantidad;
+
+        if ($cantidad < 1) {
+            echo json_encode(['status' => 'error', 'msg' => 'Cantidad debe ser mayor a 0']);
+            return;
+        }
+
+        if ($id_disco && isset($_SESSION['carrito'])) {
+            foreach ($_SESSION['carrito'] as &$item) {
+                if ($item['id_disco'] == $id_disco) {
+                    $item['cantidad'] = $cantidad;
+                    $item['subtotal'] = $item['cantidad'] * $item['precio_venta'];
+                    break;
+                }
+            }
+            echo json_encode(['status' => 'success', 'carrito' => array_values($_SESSION['carrito'])]);
+        } else {
+            echo json_encode(['status' => 'error', 'msg' => 'Producto no encontrado en carrito']);
         }
     }
 
@@ -164,6 +196,7 @@ class VentasController
             // Agregamos valores calculados al arreglo
             $datosTicket['subtotal_calc'] = $subtotal;
             $datosTicket['iva_calc'] = $iva;
+            $datosTicket['total_calc'] = $total;
 
             // Extraemos variables para uso directo en la vista
             extract($datosTicket);

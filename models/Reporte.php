@@ -137,4 +137,48 @@ class Reporte
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
+    
+    // 3.6 Cierre de Caja (Corte): Resumen de ventas del día por cajero
+    public function corteCaja($fecha) {
+        // Ventas por Cajero
+        $sql = "SELECT u.username as cajero, COUNT(v.id_venta) as num_ventas, SUM(v.total_venta) as total_vendido
+                FROM ventas v
+                JOIN usuarios u ON v.id_usuario_cajero = u.id_usuario
+                WHERE DATE(v.fecha_venta) = ? AND v.estado = 'completada'
+                GROUP BY u.id_usuario";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("s", $fecha);
+        $stmt->execute();
+        $ventasPorCajero = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        // Devoluciones del día (restan al efectivo)
+        // Nota: Las devoluciones se registran con fecha_devolucion.
+        $sqlDev = "SELECT SUM(total_reembolsado) as total_devuelto 
+                   FROM devoluciones_venta 
+                   WHERE DATE(fecha_devolucion) = ?";
+        $stmtDev = $this->db->prepare($sqlDev);
+        $stmtDev->bind_param("s", $fecha);
+        $stmtDev->execute();
+        $resDev = $stmtDev->get_result()->fetch_assoc();
+        $totalDevuelto = $resDev['total_devuelto'] ?? 0;
+        
+        // Calcular Totales Generales
+        $totalVentas = 0;
+        foreach ($ventasPorCajero as $cajero) {
+            $totalVentas += $cajero['total_vendido'];
+        }
+        $totalCaja = $totalVentas - $totalDevuelto;
+
+        return [
+            'fecha' => $fecha,
+            'detalles_cajero' => $ventasPorCajero,
+            'resumen' => [
+                'Total Ventas' => $totalVentas,
+                '(-) Devoluciones Realizadas' => $totalDevuelto,
+                '(=) Total Efectivo Teorico' => $totalCaja
+            ]
+        ];
+    }
 }

@@ -5,101 +5,75 @@
     <meta charset="UTF-8">
     <title>Registrar Devolución</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .producto-item { margin: 5px 0; padding: 10px; border: 1px solid #ddd; }
+        .producto-item input[type="checkbox"] { margin-right: 10px; }
+        .producto-item input[type="number"] { width: 80px; margin-left: 10px; }
+        #tabla-productos { display: none; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        table th { background-color: #f0f0f0; }
+        .info-venta { background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-left: 4px solid #2196F3; }
+        .total-reembolso { font-size: 18px; font-weight: bold; margin: 15px 0; }
+    </style>
 </head>
 
 <body>
     <?php include 'views/includes/menu.php'; ?>
 
     <h1>Nueva Devolución</h1>
-    <a href="index.php?c=Devoluciones&a=index">Volver al listado</a>
+    <?php if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] === 'admin'): ?>
+        <a href="index.php?c=Devoluciones&a=index">Volver al listado</a>
+    <?php endif; ?>
     <hr>
 
     <div id="form-devolucion">
-        <label>Folio Venta:</label>
-        <input type="text" id="folio_venta" placeholder="Ej. V-2023..." autocomplete="off">
-
-        <div id="items-devolucion" style="margin-top:20px;">
-            <div class="item-row">
-                <input type="text" class="codigo_barras" placeholder="Código de Barras">
-                <input type="number" class="cantidad" placeholder="Cantidad">
-                <input type="number" class="precio" placeholder="Precio Unitario (Reembolso)">
-            </div>
+        <!-- Paso 1: Buscar Venta por Folio -->
+        <div>
+            <label><strong>Folio de Venta:</strong></label>
+            <input type="text" id="folio_venta" placeholder="Ej. V-20251209..." autocomplete="off" style="width: 250px;">
+            <button onclick="buscarVenta()">Buscar Venta</button>
         </div>
-        <br>
-        <button onclick="agregarFila()">+ Agregar Item</button>
 
-        <br><br>
-        <label>Motivo:</label>
-        <input type="text" id="motivo" placeholder="Motivo de la devolución" style="width: 300px;">
-        <br><br>
+        <!-- Paso 2: Mostrar Información de la Venta y Productos -->
+        <div id="info-venta-container" style="display:none;">
+            <div class="info-venta">
+                <p><strong>Folio:</strong> <span id="info-folio"></span></p>
+                <p><strong>Fecha:</strong> <span id="info-fecha"></span></p>
+                <p><strong>Total Original:</strong> $<span id="info-total"></span></p>
+            </div>
 
-        <button onclick="guardarDevolucion()">Guardar Devolución</button>
+            <h3>Productos de la Venta</h3>
+            <table id="tabla-productos">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Devolver</th>
+                        <th>Producto</th>
+                        <th style="width: 100px;">Cant. Original</th>
+                        <th style="width: 120px;">Cant. a Devolver</th>
+                        <th style="width: 100px;">Precio Unit.</th>
+                        <th style="width: 100px;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="productos-lista">
+                    <!-- Se llenará dinámicamente -->
+                </tbody>
+            </table>
+
+            <div class="total-reembolso">
+                Total a Reembolsar: $<span id="total-reembolso">0.00</span>
+            </div>
+
+            <label><strong>Motivo de Devolución:</strong></label><br>
+            <textarea id="motivo" rows="3" style="width: 400px;" placeholder="Descripción del motivo..."></textarea>
+            <br><br>
+
+            <button onclick="guardarDevolucion()" style="padding: 10px 20px; font-size: 16px;">Guardar Devolución</button>
+        </div>
     </div>
 
-    <script>
-        function agregarFila() {
-            const div = document.createElement('div');
-            div.className = 'item-row';
-            div.style.marginTop = '5px';
-            div.innerHTML = `
-                <input type="text" class="codigo_barras" placeholder="Código de Barras">
-                <input type="number" class="cantidad" placeholder="Cantidad">
-                <input type="number" class="precio" placeholder="Precio Unitario (Reembolso)">
-                <button onclick="this.parentElement.remove()">X</button>
-            `;
-            document.getElementById('items-devolucion').appendChild(div);
-        }
-
-        function guardarDevolucion() {
-            const folioVenta = document.getElementById('folio_venta').value.trim();
-            const motivo = document.getElementById('motivo').value.trim();
-            const rows = document.querySelectorAll('.item-row');
-
-            let detalles = [];
-            let total = 0;
-
-            rows.forEach(row => {
-                const codigo = row.querySelector('.codigo_barras').value.trim();
-                const cant = row.querySelector('.cantidad').value;
-                const precio = row.querySelector('.precio').value; // Precio unitario a reembolsar
-
-                if (codigo && cant) {
-                    detalles.push({
-                        codigo_barras: codigo,
-                        cantidad: cant
-                    });
-                    total += (cant * precio);
-                }
-            });
-
-            if (!folioVenta || detalles.length === 0) {
-                alert('Faltan datos (Folio o Items)');
-                return;
-            }
-
-            const data = {
-                folio_venta: folioVenta,
-                motivo: motivo,
-                total: total,
-                detalles: detalles
-            };
-
-            fetch('index.php?c=Devoluciones&a=guardar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === 'success') {
-                        alert('Devolución registrada ID: ' + res.id_devolucion);
-                        window.location.href = 'index.php?c=Devoluciones&a=index';
-                    } else {
-                        alert('Error: ' + res.message);
-                    }
-                });
-        }
-    </script>
+    <script src="assets/js/validaciones.js"></script>
+    <script src="assets/js/devoluciones.js"></script>
 </body>
 
 </html>

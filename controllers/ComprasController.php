@@ -33,6 +33,43 @@ class ComprasController
         require_once 'views/compras/crear.php';
     }
 
+    // Acción para validar producto por código de barras (API endpoint para AJAX)
+    public function validarProducto()
+    {
+        global $db_connection;
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            $codigo = $_GET['codigo'] ?? '';
+            
+            if (empty($codigo)) {
+                echo json_encode(['status' => 'error', 'message' => 'Código requerido']);
+                return;
+            }
+            
+            $modeloDisco = new Disco($db_connection);
+            $producto = $modeloDisco->obtenerPorCodigo($codigo);
+            
+            if (!$producto) {
+                echo json_encode([
+                    'status' => 'error', 
+                    'message' => 'Producto no encontrado.'
+                ]);
+                return;
+            }
+            
+            echo json_encode([
+                'status' => 'success',
+                'producto' => [
+                    'id_disco' => $producto['id_disco'],
+                    'titulo' => $producto['titulo'],
+                    'codigo_barras' => $producto['codigo_barras'],
+                    'costo_promedio' => $producto['costo_promedio'],
+                    'precio_venta' => $producto['precio_venta']
+                ]
+            ]);
+        }
+    }
+
     // Acción guardar: Procesa el formulario o petición JSON para crear una compra
     public function guardar()
     {
@@ -46,9 +83,9 @@ class ComprasController
             $modelo = new Compra($db_connection);
             $modeloDisco = new Disco($db_connection); // Necesitamos el modelo de discos para buscar por código
 
-            if (!isset($_SESSION['usuario'])) {
+            if (!isset($_SESSION['usuario']) || $_SESSION['usuario']['rol'] !== 'admin') {
                 http_response_code(403);
-                die("No autorizado");
+                echo json_encode(['status' => 'error', 'message' => "No autorizado"]); return;
             }
 
             // Procesar detalles para obtener IDs a partir de códigos de barras

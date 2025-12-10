@@ -5,6 +5,15 @@
     <meta charset="UTF-8">
     <title>Registrar Compra</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .item-row { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background-color: #f9f9f9; }
+        .item-row input { margin: 0 5px; }
+        .producto-info { color: #28a745; font-weight: bold; margin-left: 10px; }
+        .producto-error { color: #dc3545; font-weight: bold; margin-left: 10px; }
+        .btn-remove { background-color: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+        .btn-add { background-color: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; margin: 10px 0; }
+        .btn-submit { background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; }
+    </style>
 </head>
 
 <body>
@@ -15,90 +24,26 @@
     <hr>
 
     <div id="form-compra">
-        <label>Proveedor:</label>
-        <select id="id_proveedor">
+        <label><strong>Proveedor:</strong></label>
+        <select id="id_proveedor" style="width: 300px;">
             <option value="">Seleccione un proveedor...</option>
             <?php foreach ($proveedores as $p): ?>
                 <option value="<?= $p['id_proveedor'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
             <?php endforeach; ?>
         </select>
 
-        <div id="items-compra" style="margin-top:20px;">
-            <div class="item-row">
-                <input type="text" class="codigo_barras" placeholder="Código de Barras">
-                <input type="number" class="cantidad" placeholder="Cantidad">
-                <input type="number" class="costo" placeholder="Costo Unitario">
-            </div>
+        <h3>Productos</h3>
+        <div id="items-compra">
+            <!-- Los items se agregarán dinámicamente -->
         </div>
         <br>
-        <button onclick="agregarFila()">+ Agregar Item</button>
+        <button class="btn-add" onclick="agregarFila()">+ Agregar Producto</button>
         <br><br>
-        <button onclick="guardarCompra()">Registrar Compra</button>
+        <button class="btn-submit" onclick="guardarCompra()">Registrar Compra</button>
     </div>
 
-    <script>
-        function agregarFila() {
-            const div = document.createElement('div');
-            div.className = 'item-row';
-            div.style.marginTop = '5px';
-            div.innerHTML = `
-                <input type="text" class="codigo_barras" placeholder="Código de Barras">
-                <input type="number" class="cantidad" placeholder="Cantidad">
-                <input type="number" class="costo" placeholder="Costo Unitario">
-                <button onclick="this.parentElement.remove()">X</button>
-            `;
-            document.getElementById('items-compra').appendChild(div);
-        }
-
-        function guardarCompra() {
-            const idProv = document.getElementById('id_proveedor').value;
-            const rows = document.querySelectorAll('.item-row');
-
-            let detalles = [];
-            let total = 0;
-
-            rows.forEach(row => {
-                const codigo = row.querySelector('.codigo_barras').value;
-                const cant = row.querySelector('.cantidad').value;
-                const costo = row.querySelector('.costo').value;
-
-                if (codigo && cant && costo) {
-                    detalles.push({
-                        codigo_barras: codigo,
-                        cantidad: cant,
-                        costo: costo
-                    });
-                    total += (cant * costo);
-                }
-            });
-
-            if (!idProv || detalles.length === 0) {
-                alert('Faltan datos');
-                return;
-            }
-
-            const data = {
-                id_proveedor: idProv,
-                total: total,
-                detalles: detalles
-            };
-
-            fetch('index.php?c=Compras&a=guardar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status === 'success') {
-                        alert('Compra registrada correctamente. ID: ' + res.id_compra);
-                        window.location.href = 'index.php?c=Compras&a=index'; // Redirección
-                    } else {
-                        alert('Error: ' + res.message);
-                    }
-                });
-        }
-    </script>
+    <script src="assets/js/validaciones.js"></script>
+    <script src="assets/js/compras.js"></script>
 </body>
 
 </html>

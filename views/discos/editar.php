@@ -75,7 +75,8 @@
                 <div class="form-group">
                     <label>Año Lanzamiento:</label>
                     <input type="number" name="anio" min="1900" max="2099"
-                        value="<?= $disco['anio_lanzamiento'] ?? '' ?>" required>
+                        value="<?= $disco['anio_lanzamiento'] ?? '' ?>" required 
+                        oninput="validarAnio(this)">
                 </div>
 
                 <div class="form-group">
@@ -83,7 +84,6 @@
                     <select name="tipo">
                         <option value="CD" <?= ($disco['tipo'] == 'CD') ? 'selected' : '' ?>>CD</option>
                         <option value="Vinilo" <?= ($disco['tipo'] == 'Vinilo') ? 'selected' : '' ?>>Vinilo</option>
-                        <option value="Digital" <?= ($disco['tipo'] == 'Digital') ? 'selected' : '' ?>>Digital</option>
                     </select>
                 </div>
 
@@ -100,11 +100,13 @@
                 <legend>Precios y Costos</legend>
                 <div class="form-group">
                     <label>Precio Venta:</label>
-                    <input type="number" step="0.01" name="precio" value="<?= $disco['precio_venta'] ?>" required>
+                    <input type="number" step="0.01" name="precio" value="<?= $disco['precio_venta'] ?>" required 
+                        oninput="validarPrecio(this)">
                 </div>
                 <div class="form-group">
                     <label>Costo Promedio:</label>
-                    <input type="number" step="0.01" name="costo" value="<?= $disco['costo_promedio'] ?>" required>
+                    <input type="number" step="0.01" name="costo" value="<?= $disco['costo_promedio'] ?>" required 
+                        oninput="validarCosto(this)">
                 </div>
             </fieldset>
 
@@ -159,20 +161,11 @@
         </form>
     </div>
 
+    <script src="assets/js/validaciones.js"></script>
+    <script src="assets/js/discos.js"></script>
     <script>
-        let songCount = <?= count($disco['canciones']) ?>;
-        function agregarCancion() {
-            const container = document.getElementById('canciones-container');
-            const div = document.createElement('div');
-            div.className = 'song-row';
-            div.innerHTML = `
-                <input type="text" name="canciones[${songCount}][titulo]" placeholder="Título Canción" required>
-                <input type="text" name="canciones[${songCount}][duracion]" placeholder="Duración (MM:SS)" required>
-                <button type="button" onclick="this.parentElement.remove()">X</button>
-            `;
-            container.appendChild(div);
-            songCount++;
-        }
+        // Inicializar contador de canciones desde PHP
+        initSongCount(<?= count($disco['canciones']) ?>);
     </script>
 </body>
 

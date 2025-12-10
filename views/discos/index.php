@@ -20,7 +20,9 @@
     <?php endif; ?>
 
     <div>
-        <a href="index.php?c=Discos&a=crear">Agregar Nuevo Disco</a>
+        <?php if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] === 'admin'): ?>
+            <a href="index.php?c=Discos&a=crear">Agregar Nuevo Disco</a>
+        <?php endif; ?>
     </div>
 
     <!-- Buscador sencillo -->
@@ -45,7 +47,9 @@
                 <th>Géneros</th>
                 <th>Precio</th>
                 <th>Stock</th>
-                <th>Acciones</th>
+                <?php if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] === 'admin'): ?>
+                    <th>Acciones</th>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
@@ -70,11 +74,13 @@
                         <td><?= htmlspecialchars($disco['lista_generos'] ?? '') ?></td>
                         <td><?= number_format($disco['precio_venta'], 2) ?></td>
                         <td><?= $disco['stock'] ?? 0 ?></td>
-                        <td>
-                            <a href="index.php?c=Discos&a=editar&id=<?= $disco['id_disco'] ?>">Editar</a>
-                            <!-- Placeholder buttons for future functionality -->
-                            <!-- <a href="index.php?c=Discos&a=eliminar&id=<?= $disco['id_disco'] ?>">Eliminar</a> -->
-                        </td>
+                        <?php if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] === 'admin'): ?>
+                            <td>
+                                <a href="index.php?c=Discos&a=editar&id=<?= $disco['id_disco'] ?>">Editar</a>
+                                <!-- Placeholder buttons for future functionality -->
+                                <!-- <a href="index.php?c=Discos&a=eliminar&id=<?= $disco['id_disco'] ?>">Eliminar</a> -->
+                            </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
