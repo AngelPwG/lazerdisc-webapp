@@ -26,10 +26,11 @@ class Disco
     // $limit: cantidad de registros por página
     // $offset: desde qué registro empezar
     // $busqueda: término de búsqueda (opcional)
-    public function listar($limit = 10, $offset = 0, $busqueda = '')
+    // $mostrarTodos: si es true, muestra activos e inactivos. Si es false, solo activos.
+    public function listar($limit = 10, $offset = 0, $busqueda = '', $mostrarTodos = false)
     {
         // Consulta SQL compleja con múltiples JOINs para obtener toda la información relacionada
-        $sql = "SELECT d.id_disco, d.titulo, d.codigo_barras, d.precio_venta, d.costo_promedio, d.tipo,
+        $sql = "SELECT d.id_disco, d.titulo, d.codigo_barras, d.precio_venta, d.costo_promedio, d.tipo, d.activo,
                        a.nombre_artista, di.nombre_disquera,
                        e.cantidad_actual as stock,
                        im.contenido_imagen,
@@ -41,7 +42,11 @@ class Disco
                 LEFT JOIN disqueras di ON d.id_disquera = di.id_disquera
                 LEFT JOIN existencias e ON d.id_disco = e.id_disco
                 LEFT JOIN imagenes_discos im ON d.id_disco = im.id_disco AND im.es_principal = 1
-                WHERE d.activo = 1"; // Solo mostramos discos activos
+                WHERE 1=1";
+
+        if (!$mostrarTodos) {
+            $sql .= " AND d.activo = 1";
+        }
 
         // Si hay término de búsqueda, agregamos condiciones OR para buscar en título, código o artista
         if ($busqueda) {

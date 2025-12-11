@@ -65,7 +65,7 @@ class VentasController
             // Devolvemos el carrito actualizado para que JS actualice la tabla
             $mensaje = $encontrado ? 'Producto ya en carrito, cantidad incrementada' : 'Producto agregado';
             echo json_encode([
-                'status' => 'success', 
+                'status' => 'success',
                 'carrito' => array_values($_SESSION['carrito']),
                 'msg' => $mensaje,
                 'duplicado' => $encontrado
@@ -80,7 +80,7 @@ class VentasController
     {
         $id_disco = $_POST['id_disco'] ?? null;
         $cantidad = $_POST['cantidad'] ?? 0;
-        $cantidad = (int)$cantidad;
+        $cantidad = (int) $cantidad;
 
         if ($cantidad < 1) {
             echo json_encode(['status' => 'error', 'msg' => 'Cantidad debe ser mayor a 0']);
@@ -204,7 +204,7 @@ class VentasController
             // Cargamos la vista de impresión
             require_once 'views/ventas/ticket.php';
         } else {
-            echo "Venta no encontrada";
+            echo json_encode(['status' => 'error', 'message' => 'Venta no encontrada']);
         }
     }
 }

@@ -44,14 +44,15 @@ class ReportesController
                 $q = $_GET['q'] ?? '';
                 $activos = isset($_GET['activos']) ? true : false;
                 $rangoFiltros = "Filtro: " . ($q ? "'$q' " : "Todos ") . ($activos ? "(Solo Activos)" : "");
-                
+
                 $data = $modelo->inventarioActual($q, $activos);
                 $filename = "reporte_inventario_" . date('Ymd_Hi');
-                
+
                 $columnas = ['Código', 'Nombre', 'Precio', 'Existencia', 'Estado'];
                 // Calcular Totales
                 $sumaExistencias = 0;
-                foreach($data as $row) $sumaExistencias += $row['existencia'];
+                foreach ($data as $row)
+                    $sumaExistencias += $row['existencia'];
                 $totalesReporte = [
                     'Total Productos Listados' => count($data),
                     'Suma de Existencias' => $sumaExistencias
@@ -62,19 +63,20 @@ class ReportesController
                 $tituloReporte = "REPORTE DE VENTAS (ENCABEZADOS)";
                 $data = $modelo->ventasPorRango($inicio, $fin);
                 $filename = "reporte_ventas_" . date('Ymd_Hi');
-                
+
                 $columnas = ['Folio', 'Fecha', 'Cajero', 'Total', 'Subtotal', 'IVA'];
                 // Reordenar columnas para que coincidan con la vista si es necesario, 
                 // o ajustar la vista para usar keys. En view usamos foreach($row).
                 // Ajustamos el orden en el array $data o confiamos en el orden del SQL/Modelo.
                 // SQL devuelve: folio, fecha, cajero, total. Modelo agrega: subtotal, iva.
-                
+
                 // Calcular Totales
                 $totalFacturado = 0;
-                foreach($data as $row) $totalFacturado += $row['total'];
+                foreach ($data as $row)
+                    $totalFacturado += $row['total'];
                 $numTickets = count($data);
                 $promedio = $numTickets > 0 ? $totalFacturado / $numTickets : 0;
-                
+
                 $totalesReporte = [
                     'Importe Total Facturado' => $totalFacturado,
                     'Número de Tickets' => $numTickets,
@@ -86,16 +88,16 @@ class ReportesController
                 $tituloReporte = "DETALLE DE VENTAS (LÍNEAS)";
                 $data = $modelo->detalleVentas($inicio, $fin);
                 $filename = "reporte_ventas_detalle_" . date('Ymd_Hi');
-                
+
                 $columnas = ['Fecha', 'Folio', 'Código', 'Nombre', 'Cantidad', 'Precio Unit.', 'Importe'];
-                
+
                 $unidadesVendidas = 0;
                 $importeTotal = 0;
-                foreach($data as $row) {
+                foreach ($data as $row) {
                     $unidadesVendidas += $row['cantidad'];
                     $importeTotal += $row['importe'];
                 }
-                
+
                 $totalesReporte = [
                     'Unidades Vendidas' => $unidadesVendidas,
                     'Importe Total' => $importeTotal
@@ -106,12 +108,13 @@ class ReportesController
                 $tituloReporte = "REPORTE DE COMPRAS";
                 $data = $modelo->comprasPorRango($inicio, $fin);
                 $filename = "reporte_compras_" . date('Ymd_Hi');
-                
+
                 $columnas = ['Folio', 'Fecha', 'Proveedor', 'Total'];
-                
+
                 $importeComprado = 0;
-                foreach($data as $row) $importeComprado += $row['total'];
-                
+                foreach ($data as $row)
+                    $importeComprado += $row['total'];
+
                 $totalesReporte = [
                     'Importe Total Comprado' => $importeComprado
                 ];
@@ -121,12 +124,12 @@ class ReportesController
                 $tituloReporte = "REPORTE DE DEVOLUCIONES";
                 $data = $modelo->devolucionesPorRango($inicio, $fin);
                 $filename = "reporte_devoluciones_" . date('Ymd_Hi');
-                
+
                 $columnas = ['Fecha', 'Folio Venta', 'Código', 'Nombre', 'Cant. Dev.', 'Motivo', 'Importe Ajust.'];
-                
+
                 $unidadesDev = 0;
                 $importeDev = 0;
-                foreach($data as $row) {
+                foreach ($data as $row) {
                     $unidadesDev += $row['cantidad'];
                     $importeDev += $row['importe_ajustado'];
                 }
@@ -140,15 +143,15 @@ class ReportesController
             case 'corte':
                 $tituloReporte = "CIERRE DE CAJA (CORTE DEL DÍA)";
                 // Para corte usamos solo fecha inicio como fecha de referencia
-                $resultado = $modelo->corteCaja($inicio); 
+                $resultado = $modelo->corteCaja($inicio);
                 $data = $resultado['detalles_cajero']; // Main table data
                 $filename = "corte_caja_" . str_replace('-', '', $inicio);
-                
+
                 $columnas = ['Cajero', 'Tickets Emitidos', 'Total Vendido'];
-                
+
                 // Mapear claves a nombres legibles para la vista genérica
                 $dataFormatted = [];
-                foreach($data as $row) {
+                foreach ($data as $row) {
                     $dataFormatted[] = [
                         'cajero' => $row['cajero'],
                         'num_ventas' => $row['num_ventas'],
@@ -164,7 +167,7 @@ class ReportesController
 
         // Si el formato solicitado es CSV, llamamos a la función de exportación
         if ($formato === 'csv') {
-            $this->exportarCSV($data, $filename);
+            $this->exportarCSV($data, $filename, $tituloReporte, $rangoFiltros, $totalesReporte);
         } elseif ($formato === 'json') {
             // Si no, devolvemos JSON (para vistas HTML dinámicas o API)
             header('Content-Type: application/json');
@@ -177,10 +180,10 @@ class ReportesController
     }
 
     // Método privado para generar y descargar un archivo CSV
-    private function exportarCSV($data, $filename)
+    private function exportarCSV($data, $filename, $titulo = "Reporte", $filtros = "", $totales = [])
     {
         if (empty($data)) {
-            echo "No hay datos para exportar";
+            echo json_encode(['status' => 'error', 'message' => 'No hay datos para exportar']);
             return;
         }
 
@@ -194,12 +197,39 @@ class ReportesController
         // Escribimos el BOM (Byte Order Mark) para que Excel reconozca caracteres UTF-8 correctamente
         fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-        // Escribimos la primera fila con los nombres de las columnas (keys del array)
-        fputcsv($output, array_keys($data[0]));
+        // 1. Encabezados del Negocio y del Reporte
+        fputcsv($output, ["LAZER DISC"]);
+        fputcsv($output, ["Calle Ficticia 123, Col. Centro, Mazatlán, Sinaloa. CP 82000"]);
+        fputcsv($output, ["RFC: XAXX010101000"]);
+        fputcsv($output, []); // Línea en blanco
+        fputcsv($output, [$titulo]);
+        fputcsv($output, [$filtros]);
+        fputcsv($output, ["Generado: " . date('Y-m-d H:i')]);
+        fputcsv($output, ["Generado por: " . (isset($_SESSION['user']['username']) ? $_SESSION['user']['username'] : 'Sistema')]);
+        fputcsv($output, []); // Línea en blanco
 
-        // Escribimos cada fila de datos
-        foreach ($data as $row) {
-            fputcsv($output, $row);
+        // 2. Tabla de Datos
+        // Escribimos la primera fila con los nombres de las columnas (keys del array del primer elemento)
+        if (!empty($data)) {
+            fputcsv($output, array_keys($data[0]));
+
+            // Escribimos cada fila de datos
+            foreach ($data as $row) {
+                fputcsv($output, $row);
+            }
+        }
+
+        // 3. Totales
+        if (!empty($totales)) {
+            fputcsv($output, []); // Línea en blanco separadora
+            fputcsv($output, ["RESUMEN Y TOTALES"]);
+            foreach ($totales as $key => $value) {
+                // Formatear valor si es numérico y parece moneda (opcional, pero ayuda a la lectura)
+                // En CSV es mejor dejar números limpios, pero si el usuario quiere "lo mismo que el reporte impreso"...
+                // Dejaremos el número 'raw' pero podríamos formatearlo si se quejan.
+                // Por ahora, raw es más útil para cálculos posteriores en Excel.
+                fputcsv($output, [$key, $value]);
+            }
         }
 
         fclose($output);

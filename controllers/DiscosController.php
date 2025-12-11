@@ -18,8 +18,14 @@ class DiscosController
         // Capturar término de búsqueda si existe
         $busqueda = isset($_GET['q']) ? $_GET['q'] : '';
 
+        // Determinar si mostrar todos (Solo admin puede hacerlo)
+        $mostrarTodos = false;
+        if (isset($_SESSION['usuario']['rol']) && $_SESSION['usuario']['rol'] === 'admin') {
+            $mostrarTodos = isset($_GET['mostrar_todos']) ? (bool) $_GET['mostrar_todos'] : false;
+        }
+
         // Llamamos al método listar del modelo con la búsqueda (limit 10)
-        $listaDiscos = $modelo->listar(10, 0, $busqueda);
+        $listaDiscos = $modelo->listar(10, 0, $busqueda, $mostrarTodos);
 
         // Cargamos la vista correspondiente
         require_once 'views/discos/index.php';
@@ -148,6 +154,29 @@ class DiscosController
             } catch (Exception $e) {
                 $this->editar($_POST['id_disco'], $e->getMessage());
             }
+        }
+    }
+
+    // Acción cambiarEstado: Activa o desactiva un producto
+    public function cambiarEstado()
+    {
+        global $db_connection;
+
+        // Verificar permisos de admin
+        if (!isset($_SESSION['usuario']['rol']) || $_SESSION['usuario']['rol'] !== 'admin') {
+            header("Location: index.php?c=Discos&a=index&error=Acceso no autorizado");
+            return;
+        }
+
+        $id = $_GET['id'] ?? null;
+        $estado = $_GET['estado'] ?? null; // 1 = activar, 0 = desactivar
+
+        if ($id && ($estado === '0' || $estado === '1')) {
+            $modelo = new Disco($db_connection);
+            $modelo->cambiarEstado($id, $estado);
+            header("Location: index.php?c=Discos&a=index&msg=Estado actualizado");
+        } else {
+            header("Location: index.php?c=Discos&a=index&error=Parámetros inválidos");
         }
     }
 
