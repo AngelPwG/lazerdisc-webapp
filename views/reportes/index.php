@@ -9,11 +9,28 @@
 
 <body>
     <?php include 'views/includes/menu.php'; ?>
+    
+    <!-- Mostrar alerta si existe un mensaje de error (desde el controlador) -->
+    <?php if (isset($error_message)): ?>
+        <script>
+            alert("<?= addslashes($error_message) ?>");
+        </script>
+    <?php endif; ?>
+
     <h1>Generación de Reportes</h1>
 
     <?php
     $tipoPreseleccionado = $_GET['tipo'] ?? '';
     $esCorte = ($tipoPreseleccionado === 'corte');
+    
+    // Funciones helper para mantener valores del formulario (sticky form)
+    function val($name, $default = '') {
+        return isset($_GET[$name]) ? htmlspecialchars($_GET[$name]) : $default;
+    }
+    
+    function sel($current, $value) {
+        return $current === $value ? 'selected' : '';
+    }
     ?>
 
     <div style="margin-bottom: 20px;">
@@ -29,11 +46,11 @@
         <?php else: ?>
             <select id="tipoReporte" onchange="mostrarReporte()">
                 <option value="">-- Seleccione una opción --</option>
-                <option value="inventario">Inventario Actual</option>
-                <option value="ventas">Reporte de Ventas</option>
-                <option value="ventas_detalle">Detalle de Ventas</option>
-                <option value="compras">Reporte de Compras</option>
-                <option value="corte">Cierre de Caja</option>
+                <option value="inventario" <?= sel($tipoPreseleccionado, 'inventario') ?>>Inventario Actual</option>
+                <option value="ventas" <?= sel($tipoPreseleccionado, 'ventas') ?>>Reporte de Ventas</option>
+                <option value="ventas_detalle" <?= sel($tipoPreseleccionado, 'ventas_detalle') ?>>Detalle de Ventas</option>
+                <option value="compras" <?= sel($tipoPreseleccionado, 'compras') ?>>Reporte de Compras</option>
+                <option value="corte" <?= sel($tipoPreseleccionado, 'corte') ?>>Cierre de Caja</option>
             </select>
         <?php endif; ?>
     </div>
@@ -48,14 +65,13 @@
                 <input type="hidden" name="tipo" value="inventario">
 
                 <label>Buscar:</label>
-                <input type="text" name="q" placeholder="Producto...">
+                <input type="text" name="q" placeholder="Producto..." value="<?= val('q') ?>">
 
                 <label>
-                    <input type="checkbox" name="activos" value="1" checked> Solo Activos
+                    <input type="checkbox" name="activos" value="1" <?= isset($_GET['activos']) || !isset($_GET['c']) ? 'checked' : '' ?>> Solo Activos
                 </label>
 
-                <button type="submit" name="formato" value="json">Ver JSON</button>
-                <button type="submit" name="formato" value="csv">Exportar CSV</button>
+                <button type="submit" name="formato" value="csv" formtarget="_blank">Exportar CSV</button>
                 <button type="submit" name="formato" value="print" formtarget="_blank">🖨️ Imprimir</button>
             </form>
         </section>
@@ -71,13 +87,12 @@
                 <input type="hidden" name="tipo" value="ventas">
 
                 <label>Desde:</label>
-                <input type="date" name="f_ini" required value="<?= date('Y-m-01') ?>">
+                <input type="date" name="f_ini" required value="<?= val('f_ini', date('Y-m-01')) ?>">
 
                 <label>Hasta:</label>
-                <input type="date" name="f_fin" required value="<?= date('Y-m-d') ?>">
+                <input type="date" name="f_fin" required value="<?= val('f_fin', date('Y-m-d')) ?>">
 
-                <button type="submit" name="formato" value="json">Ver JSON</button>
-                <button type="submit" name="formato" value="csv">Exportar CSV</button>
+                <button type="submit" name="formato" value="csv" formtarget="_blank">Exportar CSV</button>
                 <button type="submit" name="formato" value="print" formtarget="_blank">🖨️ Imprimir</button>
             </form>
         </section>
@@ -93,13 +108,12 @@
                 <input type="hidden" name="tipo" value="ventas_detalle">
 
                 <label>Desde:</label>
-                <input type="date" name="f_ini" required value="<?= date('Y-m-01') ?>">
+                <input type="date" name="f_ini" required value="<?= val('f_ini', date('Y-m-01')) ?>">
 
                 <label>Hasta:</label>
-                <input type="date" name="f_fin" required value="<?= date('Y-m-d') ?>">
+                <input type="date" name="f_fin" required value="<?= val('f_fin', date('Y-m-d')) ?>">
 
-                <button type="submit" name="formato" value="json">Ver JSON</button>
-                <button type="submit" name="formato" value="csv">Exportar CSV</button>
+                <button type="submit" name="formato" value="csv" formtarget="_blank">Exportar CSV</button>
                 <button type="submit" name="formato" value="print" formtarget="_blank">🖨️ Imprimir</button>
             </form>
         </section>
@@ -115,13 +129,12 @@
                 <input type="hidden" name="tipo" value="compras">
 
                 <label>Desde:</label>
-                <input type="date" name="f_ini" required value="<?= date('Y-m-01') ?>">
+                <input type="date" name="f_ini" required value="<?= val('f_ini', date('Y-m-01')) ?>">
 
                 <label>Hasta:</label>
-                <input type="date" name="f_fin" required value="<?= date('Y-m-d') ?>">
+                <input type="date" name="f_fin" required value="<?= val('f_fin', date('Y-m-d')) ?>">
 
-                <button type="submit" name="formato" value="json">Ver JSON</button>
-                <button type="submit" name="formato" value="csv">Exportar CSV</button>
+                <button type="submit" name="formato" value="csv" formtarget="_blank">Exportar CSV</button>
                 <button type="submit" name="formato" value="print" formtarget="_blank">🖨️ Imprimir</button>
             </form>
         </section>
@@ -137,9 +150,8 @@
                 <input type="hidden" name="tipo" value="corte">
 
                 <label>Fecha de Corte:</label>
-                <input type="date" name="f_ini" required value="<?= date('Y-m-d') ?>">
+                <input type="date" name="f_ini" required value="<?= val('f_ini', date('Y-m-d')) ?>">
 
-                <button type="submit" name="formato" value="json">Ver JSON</button>
                 <button type="submit" name="formato" value="csv">Exportar CSV</button>
                 <button type="submit" name="formato" value="print" formtarget="_blank">🖨️ Imprimir</button>
             </form>
@@ -169,7 +181,7 @@
             }
         }
 
-        // Ejecutar al cargar si hay algo preseleccionado (caso Corte de Caja)
+        // Ejecutar al cargar si hay algo preseleccionado
         window.addEventListener('DOMContentLoaded', () => {
             const select = document.getElementById('tipoReporte');
             if (select && select.value) {

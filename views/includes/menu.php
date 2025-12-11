@@ -25,8 +25,10 @@ $rol = $_SESSION['usuario']['rol'] ?? 'guest';
         <a href="index.php?c=Reportes&a=index">Reportes</a> |
     <?php endif; ?>
     
-    <!-- Cierre de Caja (visible para todos) -->
-    <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=html&f_ini=<?= date('Y-m-d') ?>" target="_blank">Cierre de Caja</a> |
+    <!-- Cierre de Caja SOLO para operador (en CSV direct) -->
+    <?php if ($rol === 'operador'): ?>
+        <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=csv&f_ini=<?= date('Y-m-d') ?>" target="_blank">Cierre de Caja</a> |
+    <?php endif; ?>
 
     <a href="index.php?c=Auth&a=logout" style="float: right;">Salir</a>
 </nav>

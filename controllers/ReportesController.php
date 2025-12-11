@@ -164,6 +164,19 @@ class ReportesController
                 $rangoFiltros = "Fecha de Corte: $inicio";
                 break;
         }
+        
+        // Verificación de datos vacíos
+        if (empty($data)) {
+            if ($formato === 'json') {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'No hay datos para el reporte']);
+                return;
+            } else {
+                // Caso CSV o Print (ambos en target=_blank ahora): cerrar pestaña con aviso
+                echo "<script>alert('No se encontraron datos para generar el reporte.'); window.close();</script>";
+                return;
+            }
+        }
 
         // Si el formato solicitado es CSV, llamamos a la función de exportación
         if ($formato === 'csv') {
