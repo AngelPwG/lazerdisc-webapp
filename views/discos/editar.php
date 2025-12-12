@@ -59,7 +59,9 @@
 
                         <div class="form-group">
                             <label>Año Lanzamiento:</label>
-                            <input type="number" name="anio" min="1900" max="2099" value="<?= $disco['anio_lanzamiento'] ?? '' ?>" required onblur="validarAnio(this)">
+                            <input type="number" name="anio" min="1900" max="2099"
+                                value="<?= $disco['anio_lanzamiento'] ?? '' ?>" required 
+                                onblur="validarAnio(this)">
                         </div>
 
                         <div class="form-group">

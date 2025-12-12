@@ -10,6 +10,11 @@ $rol = $_SESSION['usuario']['rol'] ?? 'guest';
         <!-- Catálogo visible para todos (admin y operador) -->
         <a href="index.php?c=Discos&a=index" class="menu-text">Catálogo</a>
 
+        <!-- Cierre de Caja SOLO para operador (en CSV direct) -->
+        <?php if ($rol === 'operador'): ?>
+            <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=csv&f_ini=<?= date('Y-m-d') ?>" target="_blank">Cierre de Caja</a> |
+        <?php endif; ?>
+
         <!-- Ventas visible para todos -->
         <a href="index.php?c=Ventas&a=index" class="menu-text">Punto de Venta</a>
 
@@ -27,7 +32,13 @@ $rol = $_SESSION['usuario']['rol'] ?? 'guest';
         <?php endif; ?>
 
         <!-- Cierre de Caja (visible para todos) -->
-        <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=html&f_ini=<?= date('Y-m-d') ?>" class="menu-text" target="_blank">Cierre de Caja</a>
+        <?php if ($rol === 'operador'): ?>
+            <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=html&f_ini=<?= date('Y-m-d') ?>" class="menu-text" target="_blank">Cierre de Caja IMPRIMIR</a>
+        <?php endif; ?>
+        <!-- Cierre de Caja SOLO para operador (en CSV direct) -->
+        <?php if ($rol === 'operador'): ?>
+            <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=csv&f_ini=<?= date('Y-m-d') ?>" class="menu-text" target="_blank">Cierre de Caja CSV</a> |
+        <?php endif; ?>
     </div>
 
     <a href="index.php?c=Auth&a=logout" class="logout"><img class="menu-icon" src="/dashboard/lazerdisc-webapp/assets/img/salir.png" alt="Salir"></a>

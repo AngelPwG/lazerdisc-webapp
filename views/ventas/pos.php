@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punto de Venta | LazerDisc</title>
     <link rel="stylesheet" href="assets/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -65,12 +64,24 @@
         <div class="pos-right">
             <div class="totals-area">
                 <div class="totals-card">
-                    <h4>Total a Pagar</h4>
-                    <div class="total-amount">$<span
-                            id="total-venta"><?= isset($_SESSION['carrito']) ? number_format(array_sum(array_column($_SESSION['carrito'], 'subtotal')), 2) : '0.00' ?></span>
+                    <h4>Resumen de Venta</h4>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd;">
+                        <span>Subtotal:</span>
+                        <span style="font-weight: 600;">$<span id="subtotal-venta">0.00</span></span>
                     </div>
                     <small style="font-size: 1.1rem; color: #888;">Items: <span id="total-items"
                             style="font-weight: 700; color: #333;"><?= isset($_SESSION['carrito']) ? count($_SESSION['carrito']) : 0 ?></span></small>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd;">
+                        <span>IVA (16%):</span>
+                        <span style="font-weight: 700; color: #333;">$<span id="iva-venta">0.00</span></span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px;">
+                        <span>Total:</span>
+                        <span style="font-weight: 700; color: #333;">$<span id="total-venta"><?= isset($_SESSION['carrito']) ? number_format(array_sum(array_column($_SESSION['carrito'], 'subtotal')), 2) : '0.00' ?></span></span>
+                    </div>
                 </div>
             </div>
 

@@ -9,6 +9,13 @@
 
 <body>
     <?php include 'views/includes/menu.php'; ?>
+  
+    <!-- Mostrar alerta si existe un mensaje de error (desde el controlador) -->
+    <?php if (isset($error_message)): ?>
+        <script>
+            alert("<?= addslashes($error_message) ?>");
+        </script>
+    <?php endif; ?>
     <div class="page-header">
         <h1 class="page-title">Generación de Reportes</h1>
     </div>
@@ -215,7 +222,7 @@
             }
         }
 
-        // Ejecutar al cargar si hay algo preseleccionado (caso Corte de Caja)
+        // Ejecutar al cargar si hay algo preseleccionado
         window.addEventListener('DOMContentLoaded', () => {
             const select = document.getElementById('tipoReporte');
             if (select && select.value) {

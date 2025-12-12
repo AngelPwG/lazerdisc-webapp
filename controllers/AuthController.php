@@ -28,7 +28,8 @@ class AuthController
             header("Location: index.php?c=Discos&a=index");
             exit;
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Usuario o contraseña incorrectos']);
+            header("Location: index.php?c=Auth&a=index&error=1");
+            exit;
         }
     }
 
