@@ -3,31 +3,33 @@
 // Obtenemos el rol de la sesión. Si no existe, asumimos 'guest' (aunque index.php ya protege).
 $rol = $_SESSION['usuario']['rol'] ?? 'guest';
 ?>
-<nav style="background: #eee; padding: 10px; margin-bottom: 20px;">
-    <strong>LazerDisc</strong> |
-    
-    <!-- Catálogo visible para todos (admin y operador) -->
-    <a href="index.php?c=Discos&a=index">Catálogo</a> |
-    
-    <!-- Ventas visible para todos -->
-    <a href="index.php?c=Ventas&a=index">Punto de Venta</a> |
-    
-    <!-- Compras SOLO para admin -->
-    <?php if ($rol === 'admin'): ?>
-        <a href="index.php?c=Compras&a=index">Compras</a> |
-    <?php endif; ?>
+<nav style="background: #6F9BD1; " class="menu">
+    <a href="index.php" class="menu-logo"><img src="/dashboard/lazerdisc-webapp/assets/img/logo.png" alt="LazerDisc"></a>
 
-    <!-- Devoluciones visible para todos -->
-    <a href="index.php?c=Devoluciones&a=index">Devoluciones</a> |
-    
-    <!-- Reportes SOLO para admin -->
-    <?php if ($rol === 'admin'): ?>
-        <a href="index.php?c=Reportes&a=index">Reportes</a> |
-    <?php endif; ?>
-    
-    <!-- Cierre de Caja (visible para todos) -->
-    <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=html&f_ini=<?= date('Y-m-d') ?>" target="_blank">Cierre de Caja</a> |
+    <div class="menu-center">
+        <!-- Catálogo visible para todos (admin y operador) -->
+        <a href="index.php?c=Discos&a=index" class="menu-text">Catálogo</a>
 
-    <a href="index.php?c=Auth&a=logout" style="float: right;">Salir</a>
+        <!-- Ventas visible para todos -->
+        <a href="index.php?c=Ventas&a=index" class="menu-text">Punto de Venta</a>
+
+        <!-- Compras SOLO para admin -->
+        <?php if ($rol === 'admin'): ?>
+            <a href="index.php?c=Compras&a=index" class="menu-text">Compras</a>
+        <?php endif; ?>
+
+        <!-- Devoluciones visible para todos -->
+        <a href="index.php?c=Devoluciones&a=index" class="menu-text">Devoluciones</a>
+
+        <!-- Reportes SOLO para admin -->
+        <?php if ($rol === 'admin'): ?>
+            <a href="index.php?c=Reportes&a=index" class="menu-text">Reportes</a>
+        <?php endif; ?>
+
+        <!-- Cierre de Caja (visible para todos) -->
+        <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=html&f_ini=<?= date('Y-m-d') ?>" class="menu-text" target="_blank">Cierre de Caja</a>
+    </div>
+
+    <a href="index.php?c=Auth&a=logout" class="logout"><img class="menu-icon" src="/dashboard/lazerdisc-webapp/assets/img/salir.png" alt="Salir"></a>
 </nav>
 <hr>

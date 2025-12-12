@@ -16,19 +16,20 @@
         <!-- Izquierda: Búsqueda y Tabla -->
         <div class="pos-left">
             <div class="pos-header">
-                <h2><span style="color: var(--color-secondary-dark);">Punto de Venta</span></h2>
+                <h2>Punto de Venta</h2>
             </div>
 
             <div class="search-bar">
                 <input type="text" id="codigo" placeholder="Escanear o ingresar código de barras..." autofocus
                     autocomplete="off">
-                <button onclick="agregarProducto()">Agregar</button>
+                <button onclick="agregarProducto()" class="btn-primary"
+                    style="height: auto; padding: 0 30px; font-size: 1.1rem;">Agregar</button>
             </div>
             <div id="mensaje"></div>
 
             <div class="cart-table-container">
-                <table>
-                    <thead>
+                <table class="catalog-table" style="margin-top: 0; border: none;">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
                             <th style="width: 15%">Código</th>
                             <th style="width: 40%">Producto</th>
@@ -68,14 +69,14 @@
                     <div class="total-amount">$<span
                             id="total-venta"><?= isset($_SESSION['carrito']) ? number_format(array_sum(array_column($_SESSION['carrito'], 'subtotal')), 2) : '0.00' ?></span>
                     </div>
-                    <small>Items: <span
-                            id="total-items"><?= isset($_SESSION['carrito']) ? count($_SESSION['carrito']) : 0 ?></span></small>
+                    <small style="font-size: 1.1rem; color: #888;">Items: <span id="total-items"
+                            style="font-weight: 700; color: #333;"><?= isset($_SESSION['carrito']) ? count($_SESSION['carrito']) : 0 ?></span></small>
                 </div>
             </div>
 
             <div class="action-buttons">
-                <button class="btn-confirm" onclick="confirmarVenta()">Cobrar</button>
-                <button class="btn-cancel" onclick="cancelarVenta()">Cancelar Venta</button>
+                <button class="btn-confirm" onclick="confirmarVenta()">Cobrar Venta</button>
+                <button class="btn-cancel" onclick="cancelarVenta()">Cancelar</button>
             </div>
         </div>
     </div>
