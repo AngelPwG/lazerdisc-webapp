@@ -93,14 +93,14 @@ function renderCarrito(carrito) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">Carrito vacío</td></tr>';
     }
 
-    // Calcular subtotal e IVA (asumiendo que el precio incluye IVA del 16%)
-    const IVA_RATE = 0.16;
-    const subtotal = total / (1 + IVA_RATE);
-    const iva = total - subtotal;
+    // Calcular subtotal e IVA (el subtotal es la base, IVA es 16% adicional)
+    const subtotal = total;
+    const iva = total * 0.16;
+    const totalConIva = total * 1.16;
 
     document.getElementById('subtotal-venta').innerText = subtotal.toFixed(2);
     document.getElementById('iva-venta').innerText = iva.toFixed(2);
-    document.getElementById('total-venta').innerText = total.toFixed(2);
+    document.getElementById('total-venta').innerText = totalConIva.toFixed(2);
     document.getElementById('total-items').innerText = items;
 }
 

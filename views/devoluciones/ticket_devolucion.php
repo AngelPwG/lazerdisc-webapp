@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket de Venta #<?= $folio_venta ?></title>
+    <title>Ticket de Devolución #<?= $folio_venta ?></title>
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;
@@ -26,6 +26,17 @@
             font-size: 16px;
         }
 
+        .devolucion-badge {
+            background-color: #000;
+            color: #fff;
+            padding: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 4px;
+        }
+
         .info {
             margin-bottom: 10px;
             border-bottom: 1px dashed #000;
@@ -33,6 +44,17 @@
         }
 
         .info p {
+            margin: 2px 0;
+        }
+
+        .motivo-box {
+            background-color: #f5f5f5;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px dashed #000;
+        }
+
+        .motivo-box p {
             margin: 2px 0;
         }
 
@@ -50,6 +72,10 @@
         td {
             padding: 2px 0;
             vertical-align: top;
+        }
+
+        .producto-devuelto {
+            text-decoration: line-through;
         }
 
         .text-right {
@@ -121,10 +147,19 @@
         <p>Av. SeisSiete <br>Ciudad, CP 82018<br>Tel: (555) 555-5555</p>
     </div>
 
+    <div class="devolucion-badge">
+        *** DEVOLUCIÓN ***
+    </div>
+
     <div class="info">
-        <p><strong>Folio:</strong> <?= $folio_venta ?></p>
-        <p><strong>Fecha:</strong> <?= date('d/m/Y H:i', strtotime($fecha_venta)) ?></p>
-        <p><strong>Cajero:</strong> <?= htmlspecialchars($cajero) ?></p>
+        <p><strong>Venta Original:</strong> <?= $folio_venta ?></p>
+        <p><strong>Fecha Devolución:</strong> <?= date('d/m/Y H:i', strtotime($fecha_devolucion)) ?></p>
+        <p><strong>Autorizado por:</strong> <?= htmlspecialchars($cajero) ?></p>
+    </div>
+
+    <div class="motivo-box">
+        <p><strong>Motivo:</strong></p>
+        <p><?= htmlspecialchars($motivo) ?></p>
     </div>
 
     <table>
@@ -138,7 +173,7 @@
         </thead>
         <tbody>
             <?php foreach ($lineas as $item): ?>
-                <tr>
+                <tr class="producto-devuelto">
                     <td><?= htmlspecialchars($item['descripcion']) ?></td>
                     <td style="text-align: center;"><?= $item['cantidad'] ?></td>
                     <td>$<?= number_format($item['precio_unitario'], 2) ?></td>
@@ -158,13 +193,13 @@
             <span>$<?= number_format($iva_calc, 2) ?></span>
         </p>
         <p class="bold" style="font-size: 14px; margin-top: 5px;">
-            <span>TOTAL:</span>
+            <span>TOTAL REEMBOLSADO:</span>
             <span>$<?= number_format($total_calc, 2) ?></span>
         </p>
     </div>
 
     <div class="footer">
-        <p style="margin-top: 20px;">¡Gracias por su compra!</p>
+        <p style="margin-top: 20px;">Devolución procesada</p>
         <p>Conserve este ticket para<br>cualquier aclaración.</p>
     </div>
 

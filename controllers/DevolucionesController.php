@@ -143,4 +143,70 @@ class DevolucionesController
             }
         }
     }
+
+    // Acción ticket: Genera el ticket de devolución para imprimir
+    public function ticket()
+    {
+        global $db_connection;
+
+        $id_devolucion = $_GET['id_devolucion'] ?? 0;
+
+        if (!$id_devolucion) {
+            die('ID de devolución no especificado');
+        }
+
+        // Obtener datos de la devolución
+        $stmt = $db_connection->prepare("
+            SELECT dv.id_devolucion, dv.fecha_devolucion, dv.total_reembolsado, dv.motivo,
+                   v.folio_venta, v.fecha_venta,
+                   u.username as cajero
+            FROM devoluciones_venta dv
+            JOIN ventas v ON dv.id_venta_origen = v.id_venta
+            JOIN usuarios u ON dv.id_usuario_autoriza = u.id_usuario
+            WHERE dv.id_devolucion = ?
+        ");
+        $stmt->bind_param("i", $id_devolucion);
+        $stmt->execute();
+        $devolucion = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$devolucion) {
+            die('Devolución no encontrada');
+        }
+
+        // Obtener detalles de productos devueltos
+        $stmt = $db_connection->prepare("
+            SELECT dd.cantidad_devuelta as cantidad, 
+                   d.titulo as descripcion,
+                   vd.precio_unitario,
+                   (dd.cantidad_devuelta * vd.precio_unitario) as subtotal
+            FROM devoluciones_det dd
+            JOIN discos d ON dd.id_disco = d.id_disco
+            JOIN ventas_det vd ON vd.id_disco = dd.id_disco 
+                AND vd.id_venta = (SELECT id_venta_origen FROM devoluciones_venta WHERE id_devolucion = ?)
+            WHERE dd.id_devolucion = ?
+        ");
+        $stmt->bind_param("ii", $id_devolucion, $id_devolucion);
+        $stmt->execute();
+        $lineas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        // Preparar variables para la vista
+        $folio_venta = $devolucion['folio_venta'];
+        $fecha_devolucion = $devolucion['fecha_devolucion'];
+        $cajero = $devolucion['cajero'];
+        $motivo = $devolucion['motivo'];
+        
+        // Calcular totales
+        $subtotal_calc = 0;
+        foreach ($lineas as $item) {
+            $subtotal_calc += $item['subtotal'];
+        }
+        
+        $iva_calc = $subtotal_calc * 0.16;
+        $total_calc = $subtotal_calc + $iva_calc;
+
+        // Cargar vista del ticket
+        require_once 'views/devoluciones/ticket_devolucion.php';
+    }
 }

@@ -135,7 +135,14 @@ function guardarDevolucion() {
         .then(res => {
             if (res.status === 'success') {
                 alert('Devolución registrada correctamente. ID: ' + res.id_devolucion);
-                window.location.href = 'index.php?c=Devoluciones&a=index';
+
+                // Abrir ticket en nueva ventana
+                window.open('index.php?c=Devoluciones&a=ticket&id_devolucion=' + res.id_devolucion, '_blank', 'width=400,height=600');
+
+                // Redirigir al index después de un momento
+                setTimeout(function () {
+                    window.location.href = 'index.php?c=Devoluciones&a=index';
+                }, 500);
             } else {
                 alert('Error: ' + res.message);
             }

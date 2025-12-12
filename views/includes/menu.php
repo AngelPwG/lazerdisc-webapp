@@ -4,16 +4,11 @@
 $rol = $_SESSION['usuario']['rol'] ?? 'guest';
 ?>
 <nav style="background: #6F9BD1; " class="menu">
-    <a href="index.php" class="menu-logo"><img src="/dashboard/lazerdisc-webapp/assets/img/logo.png" alt="LazerDisc"></a>
+    <a href="index.php" class="menu-logo"><img src="assets/img/logo.png" alt="LazerDisc"></a>
 
     <div class="menu-center">
         <!-- Catálogo visible para todos (admin y operador) -->
         <a href="index.php?c=Discos&a=index" class="menu-text">Catálogo</a>
-
-        <!-- Cierre de Caja SOLO para operador (en CSV direct) -->
-        <?php if ($rol === 'operador'): ?>
-            <a href="index.php?c=Reportes&a=generar&tipo=corte&formato=csv&f_ini=<?= date('Y-m-d') ?>" target="_blank">Cierre de Caja</a> |
-        <?php endif; ?>
 
         <!-- Ventas visible para todos -->
         <a href="index.php?c=Ventas&a=index" class="menu-text">Punto de Venta</a>
@@ -41,6 +36,6 @@ $rol = $_SESSION['usuario']['rol'] ?? 'guest';
         <?php endif; ?>
     </div>
 
-    <a href="index.php?c=Auth&a=logout" class="logout"><img class="menu-icon" src="/dashboard/lazerdisc-webapp/assets/img/salir.png" alt="Salir"></a>
+    <a href="index.php?c=Auth&a=logout" class="logout"><img class="menu-icon" src="assets/img/salir.png" alt="Salir"></a>
 </nav>
 <hr>
