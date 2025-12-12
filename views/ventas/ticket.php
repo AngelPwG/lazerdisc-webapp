@@ -95,6 +95,13 @@
             margin-bottom: 10px;
         }
 
+        .logo-ticket img {
+            max-width: 100px;
+            /* Decent readable size */
+            height: auto;
+            margin-bottom: 5px;
+        }
+
         @media print {
             .btn-print {
                 display: none;
@@ -107,8 +114,11 @@
     <button class="btn-print" onclick="window.print()">Imprimir Ticket</button>
 
     <div class="header">
-        <h2>LAZERDISC SHOP</h2>
-        <p>Av. Siempre Viva 123<br>Ciudad, CP 12345<br>Tel: (555) 555-5555</p>
+        <div class="logo-ticket">
+            <img src="assets/img/logoblanconegro.png" alt="Logo de la Empresa">
+        </div>
+        <h2>LAZER DISC</h2>
+        <p>Av. SeisSiete <br>Ciudad, CP 82018<br>Tel: (555) 555-5555</p>
     </div>
 
     <div class="info">
