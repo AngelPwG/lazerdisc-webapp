@@ -93,6 +93,13 @@ function renderCarrito(carrito) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">Carrito vacío</td></tr>';
     }
 
+    // Calcular subtotal e IVA (asumiendo que el precio incluye IVA del 16%)
+    const IVA_RATE = 0.16;
+    const subtotal = total / (1 + IVA_RATE);
+    const iva = total - subtotal;
+
+    document.getElementById('subtotal-venta').innerText = subtotal.toFixed(2);
+    document.getElementById('iva-venta').innerText = iva.toFixed(2);
     document.getElementById('total-venta').innerText = total.toFixed(2);
     document.getElementById('total-items').innerText = items;
 }
@@ -132,16 +139,38 @@ function confirmarVenta() {
 
     if (!confirm('¿Confirmar venta por $' + total.toFixed(2) + '?')) return;
 
+    // Abrir ventana ANTES del fetch para evitar que el bloqueador de popups la bloquee
+    // Abrimos con una página de espera o en blanco
+    const ticketWindow = window.open('', '_blank');
+    if (ticketWindow) {
+        ticketWindow.document.write('<html><head><title>Generando ticket...</title></head><body style="font-family: Arial; text-align: center; padding-top: 50px;"><h2>Generando ticket...</h2><p>Por favor espere...</p></body></html>');
+    }
+
     fetch('index.php?c=Ventas&a=confirmar')
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
                 alert('Venta realizada con éxito. Folio: ' + data.folio);
-                window.open('index.php?c=Ventas&a=ticket&id=' + data.id_venta, '_blank');
+                // Redirigir la ventana que ya abrimos
+                if (ticketWindow) {
+                    ticketWindow.location.href = 'index.php?c=Ventas&a=ticket&id=' + data.id_venta;
+                }
                 location.reload();
             } else {
+                // Si hay error, cerrar la ventana que abrimos
+                if (ticketWindow) {
+                    ticketWindow.close();
+                }
                 alert('Error: ' + data.msg);
             }
+        })
+        .catch(err => {
+            // En caso de error de red, también cerrar la ventana
+            if (ticketWindow) {
+                ticketWindow.close();
+            }
+            console.error(err);
+            alert('Error de conexión al procesar la venta');
         });
 }
 

@@ -63,12 +63,26 @@
         <div class="pos-right">
             <div class="totals-area">
                 <div class="totals-card">
-                    <h4>Total a Pagar</h4>
-                    <div class="total-amount">$<span
-                            id="total-venta"><?= isset($_SESSION['carrito']) ? number_format(array_sum(array_column($_SESSION['carrito'], 'subtotal')), 2) : '0.00' ?></span>
+                    <h4>Resumen de Venta</h4>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd;">
+                        <span>Subtotal:</span>
+                        <span style="font-weight: 600;">$<span id="subtotal-venta">0.00</span></span>
                     </div>
-                    <small>Items: <span
-                            id="total-items"><?= isset($_SESSION['carrito']) ? count($_SESSION['carrito']) : 0 ?></span></small>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd;">
+                        <span>IVA (16%):</span>
+                        <span style="font-weight: 600;">$<span id="iva-venta">0.00</span></span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px;">
+                        <span style="font-size: 1.1em; font-weight: bold;">Total:</span>
+                        <span style="font-size: 1.3em; font-weight: bold; color: var(--color-secondary-dark, #2c3e50);">$<span id="total-venta"><?= isset($_SESSION['carrito']) ? number_format(array_sum(array_column($_SESSION['carrito'], 'subtotal')), 2) : '0.00' ?></span></span>
+                    </div>
+                    
+                    <small style="display: block; text-align: center; margin-top: 10px; color: #666;">
+                        Items: <span id="total-items"><?= isset($_SESSION['carrito']) ? count($_SESSION['carrito']) : 0 ?></span>
+                    </small>
                 </div>
             </div>
 

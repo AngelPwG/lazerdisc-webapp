@@ -63,7 +63,7 @@
                 <div class="form-group">
                     <label>Año Lanzamiento:</label>
                     <input type="number" name="anio" min="1900" max="2099" required 
-                        oninput="validarAnio(this)">
+                        onblur="validarAnio(this)">
                 </div>
 
                 <div class="form-group">
@@ -88,12 +88,12 @@
                 <div class="form-group">
                     <label>Precio Venta:</label>
                     <input type="number" step="0.01" name="precio" required 
-                        oninput="validarPrecio(this)">
+                        onblur="validarPrecio(this)">
                 </div>
                 <div class="form-group">
                     <label>Costo Promedio:</label>
                     <input type="number" step="0.01" name="costo" required 
-                        oninput="validarCosto(this)">
+                        onblur="validarCosto(this)">
                 </div>
             </fieldset>
 

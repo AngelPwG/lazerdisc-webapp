@@ -9,6 +9,12 @@
 </head>
 
 <body class="login-page">
+    <?php if (isset($_GET['error'])): ?>
+        <script>
+            alert('Usuario o contraseña incorrectos. Por favor, intente nuevamente.');
+        </script>
+    <?php endif; ?>
+    
     <div class="login-container">
         <div class="logo-space">
             <img src="assets/img/logo.png" alt="Logo de la Empresa">

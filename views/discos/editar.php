@@ -76,7 +76,7 @@
                     <label>Año Lanzamiento:</label>
                     <input type="number" name="anio" min="1900" max="2099"
                         value="<?= $disco['anio_lanzamiento'] ?? '' ?>" required 
-                        oninput="validarAnio(this)">
+                        onblur="validarAnio(this)">
                 </div>
 
                 <div class="form-group">
@@ -101,12 +101,12 @@
                 <div class="form-group">
                     <label>Precio Venta:</label>
                     <input type="number" step="0.01" name="precio" value="<?= $disco['precio_venta'] ?>" required 
-                        oninput="validarPrecio(this)">
+                        onblur="validarPrecio(this)">
                 </div>
                 <div class="form-group">
                     <label>Costo Promedio:</label>
                     <input type="number" step="0.01" name="costo" value="<?= $disco['costo_promedio'] ?>" required 
-                        oninput="validarCosto(this)">
+                        onblur="validarCosto(this)">
                 </div>
             </fieldset>
 
